@@ -1,0 +1,7 @@
+<app-contener>
+  @if (activeModal()) {
+    <app-modal [(active)]="activeModal">
+    </app-modal>
+  }
+  <app-administrations-table [(activeModal)]="activeModal" (activeModalChange)="onActiveModal($event)"/>
+</app-contener>

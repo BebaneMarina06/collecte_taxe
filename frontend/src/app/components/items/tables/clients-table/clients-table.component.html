@@ -1,0 +1,269 @@
+<div class="mt-2">
+  <!-- modal pour appeler le formulaire de creation du contribuable -->
+  @if (activeModal()) {
+    <app-modal [(active)]="activeModal">
+      <app-create-client (clientCreated)="onClientCreated()"></app-create-client>
+    </app-modal>
+  }
+  <!-- modal pour appeler le formulaire du details  -->
+  @if (activeModalDetailsTaxe()) {
+    <app-modal [(active)]="activeModalDetailsTaxe">
+      <app-details-taxes></app-details-taxes>
+    </app-modal>
+  }
+
+  <!-- Modal pour afficher le QR Code -->
+  @if (activeModalQRCode()) {
+    <app-modal [(active)]="activeModalQRCode">
+  <div class="p-6">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-lg font-semibold text-gray-900">QR Code du Contribuable</h3>
+      <button 
+        (click)="closeQRCodeModal()"
+        class="text-gray-400 hover:text-gray-600">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+      </button>
+    </div>
+    
+    @if (selectedContribuable) {
+      <div class="text-center">
+        <div class="mb-4">
+          <p class="text-sm font-medium text-gray-900">{{ selectedContribuable.nom }} {{ selectedContribuable.prenom || '' }}</p>
+          @if (selectedContribuable.telephone) {
+            <p class="text-xs text-gray-500">Tél: {{ selectedContribuable.telephone }}</p>
+          }
+          @if (selectedContribuable.numero_identification) {
+            <p class="text-xs text-gray-500">ID: {{ selectedContribuable.numero_identification }}</p>
+          }
+        </div>
+        
+        @if (loadingQRImage) {
+          <div class="flex justify-center items-center mb-4 py-8">
+            <svg class="animate-spin h-8 w-8 text-main" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            <span class="ml-3 text-sm text-gray-600">Chargement du QR code...</span>
+          </div>
+        } @else if (qrCodeImageUrl) {
+          <div class="flex justify-center mb-4">
+            <img [src]="qrCodeImageUrl" alt="QR Code" class="max-w-full h-auto border border-gray-200 rounded-lg shadow-sm" (error)="handleImageError($event)">
+          </div>
+          
+          @if (selectedContribuable.qr_code) {
+            <div class="mb-4 p-3 bg-gray-50 rounded-lg">
+              <p class="text-xs text-gray-600 mb-1">Code QR:</p>
+              <p class="text-sm font-mono text-gray-900">{{ selectedContribuable.qr_code }}</p>
+            </div>
+          }
+          
+          <button
+            (click)="downloadQRCode()"
+            [disabled]="downloadingQR"
+            class="w-full px-4 py-2 bg-main text-white rounded-lg font-semibold hover:bg-main/90 transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+            @if (downloadingQR) {
+              <svg class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Téléchargement...</span>
+            } @else {
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+              </svg>
+              <span>Télécharger le QR Code</span>
+            }
+          </button>
+        }
+      </div>
+    }
+    </div>
+  </app-modal>
+  }
+ 
+  <div class="flex justify-between py-3 bg-background rounded-lg my-8 px-4">
+    <!--    recherche -->
+    <div class="grid grid-cols-1">
+      <input 
+        type="text" 
+        name="search" 
+        id="search"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        class="col-start-1 row-start-1 block w-full rounded-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:pl-9 sm:text-sm/6"
+        placeholder="Rechercher un contribuable...">
+      <svg class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-main-text-color sm:size-4"
+        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11.5" cy="11.5" r="9.5" />
+          <path stroke-linecap="round" d="M18.5 18.5L22 22" />
+        </g>
+      </svg>
+    </div>
+    <!-- conteneur : filtre, export, datepicker et bouton retrait -->
+    <div class="flex gap-3 items-center">
+      <ul>
+        <li>
+          <button class="flex gap-2 items-center px-4 bg-white py-2 rounded-lg border">
+            <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+              <path fill="none" stroke="currentColor" stroke-width="1.5"
+                d="M19 3H5c-1.414 0-2.121 0-2.56.412S2 4.488 2 5.815v.69c0 1.037 0 1.556.26 1.986s.733.698 1.682 1.232l2.913 1.64c.636.358.955.537 1.183.735c.474.411.766.895.898 1.49c.064.284.064.618.064 1.285v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .064-1.285a2.68 2.68 0 0 1 .899-1.49c.227-.197.546-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3Z" />
+            </svg>
+            <span>Filter</span>
+          </button>
+        </li>
+      </ul>
+      <button class="flex gap-2 items-center px-4 bg-white py-2 rounded-lg border">
+        <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path fill="currentColor"
+            d="M14 5v4C7 10 4 15 3 20c2.5-3.5 6-5.1 11-5.1V19l7-7zm2 4.83L18.17 12L16 14.17V12.9h-2c-2.07 0-3.93.38-5.66.95c1.4-1.39 3.2-2.48 5.94-2.85l1.72-.27z" />
+        </svg>
+        <span>Exporter</span>
+      </button>
+      <button (click)="onActiveModal(true)"  type="button"
+        class="inline-flex items-center gap-x-3 rounded-md bg-main px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-main/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 5v14m-7-7h14" />
+        </svg>
+        Ajouter un contribuable
+      </button>
+    </div>
+  </div>
+  <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-gray-600">
+        <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+          <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+            <th class="px-6 py-4 text-left">Contribuable</th>
+            <th class="px-6 py-4 text-left">Contacts</th>
+            <th class="px-6 py-4 text-left">Profil</th>
+            <th class="px-6 py-4 text-left">QR Code</th>
+            <th class="px-6 py-4 text-left">Territoire</th>
+            <th class="px-6 py-4 text-left">Collecteur assigné</th>
+            <th class="px-6 py-4 text-right">Statut & actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+            @if (loading) {
+              <tr>
+                <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                  Chargement...
+                </td>
+              </tr>
+            } @else {
+              @for (contribuable of contribuables; track contribuable.id) {
+                <tr class="hover:bg-slate-50 transition-colors">
+                  <td class="px-6 py-4">
+                    <p class="font-semibold text-gray-900">{{ contribuable.nom }} {{ contribuable.prenom || '' }}</p>
+                    <p class="text-xs text-gray-500">Créé le {{ dateFormater(contribuable.created_at, "/") }}</p>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="space-y-1">
+                      <p class="text-sm font-medium text-gray-900">{{ contribuable.telephone }}</p>
+                      @if (contribuable.email) {
+                        <p class="text-xs text-gray-500">{{ contribuable.email }}</p>
+                      }
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    <div class="flex flex-wrap gap-2">
+                      <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
+                        {{ contribuable.type_contribuable?.nom || 'N/A' }}
+                      </span>
+                      <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                        {{ contribuable.numero_identification || 'Identifiant ND' }}
+                      </span>
+                    </div>
+                  </td>
+                  <td class="px-6 py-4">
+                    @if (contribuable.qr_code) {
+                      <button 
+                        (click)="showQRCode(contribuable)"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 transition-colors">
+                        <svg class="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                        </svg>
+                        <span class="text-xs font-mono">Voir QR Code</span>
+                      </button>
+                    } @else {
+                      <button 
+                        (click)="generateQRCode(contribuable)"
+                        [disabled]="generatingQR"
+                        class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 text-blue-700 text-xs font-semibold hover:bg-blue-100 transition-colors disabled:opacity-50">
+                        @if (generatingQR) {
+                          <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          <span>Génération...</span>
+                        } @else {
+                          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                          </svg>
+                          <span>Générer QR Code</span>
+                        }
+                      </button>
+                    }
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <p class="font-medium text-gray-900">{{ contribuable.quartier?.nom || 'N/A' }}</p>
+                    @if (contribuable.quartier?.zone?.nom) {
+                      <p class="text-xs text-gray-500">Zone : {{ contribuable.quartier?.zone?.nom }}</p>
+                    }
+                  </td>
+                  <td class="px-6 py-4 text-sm">
+                    <p class="font-medium text-gray-900">{{ contribuable.collecteur?.nom || 'N/A' }} {{ contribuable.collecteur?.prenom || '' }}</p>
+                    @if (contribuable.collecteur?.matricule) {
+                      <p class="text-xs text-gray-500">Matricule : {{ contribuable.collecteur?.matricule }}</p>
+                    }
+                  </td>
+                  <td class="px-6 py-4 text-right">
+                    <div class="flex items-center justify-end gap-3">
+                      <span
+                        [class]="'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ' + (contribuable.actif ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700')">
+                        <span class="size-2.5 rounded-full bg-current/40"></span>
+                        {{ contribuable.actif ? 'Actif' : 'Inactif' }}
+                      </span>
+                      <div class="inline-flex gap-2">
+                        <button
+                          (click)="onactiveModalDetailsTaxe(true)"
+                          class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50">
+                          Taxes
+                        </button>
+                        <button
+                          (click)="onActiveModal(true)"
+                          class="px-3 py-1.5 rounded-lg bg-main text-white text-xs font-semibold hover:bg-main/90">
+                          Modifier
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="7" class="px-6 py-12 text-center text-gray-500">
+                    Aucun contribuable trouvé
+                  </td>
+                </tr>
+              }
+            }
+        </tbody>
+      </table>
+    </div>
+  
+  <!-- Pagination -->
+  @if (!loading && contribuables.length > 0) {
+    <app-pagination
+      [currentPage]="currentPage"
+      [totalPages]="totalPages"
+      [pageSize]="pageSize"
+      [totalItems]="totalItems"
+      (pageChange)="onPageChange($event)"
+      (pageSizeChange)="onPageSizeChange($event)"
+    />
+  }
+</div>
+</div>

@@ -1,0 +1,270 @@
+<app-contener>
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Gestion des Collecteurs</h1>
+    <div class="flex gap-3">
+      <button (click)="openBulkHeureClotureModal()" class="px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600">
+        Modifier l'heure de fermeture (tous)
+      </button>
+      <button (click)="openCreateModal()" class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90">
+        Ajouter un collecteur
+      </button>
+    </div>
+  </div>
+
+  <!-- Modal de création -->
+  @if (activeModal()) {
+    <app-modal [(active)]="activeModal" title="Créer un collecteur">
+      <app-create-collecteur (collecteurCreated)="onCollecteurCreated()" />
+    </app-modal>
+  }
+
+  <!-- Modal de modification -->
+  @if (activeModalEdit()) {
+    <app-modal [(active)]="activeModalEdit" [title]="selectedCollecteur ? 'Modifier le collecteur' : 'Créer un collecteur'">
+      <app-create-collecteur [collecteur]="selectedCollecteur" (collecteurCreated)="onCollecteurCreated()" />
+    </app-modal>
+  }
+
+  <!-- Modal modification heure de fermeture en masse -->
+  @if (activeModalBulkHeureCloture()) {
+    <app-modal [(active)]="activeModalBulkHeureCloture" title="Modifier l'heure de fermeture pour tous les collecteurs">
+      <app-bulk-heure-cloture (heureClotureUpdated)="onBulkHeureClotureUpdated()" />
+    </app-modal>
+  }
+
+  <!-- Modal des activités -->
+  @if (activeModalActivites()) {
+    <app-modal [(active)]="activeModalActivites" [title]="selectedCollecteur ? 'Activités de ' + selectedCollecteur.nom + ' ' + selectedCollecteur.prenom : 'Activités'">
+    @if (loadingActivites) {
+      <div class="text-center py-8">
+        <p class="text-gray-500">Chargement des activités...</p>
+      </div>
+    } @else if (activites) {
+      <div class="space-y-6">
+        <!-- Filtres de dates -->
+        <div class="grid grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date de début</label>
+            <input
+              type="date"
+              [(ngModel)]="dateDebut"
+              (change)="onDateChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Date de fin</label>
+            <input
+              type="date"
+              [(ngModel)]="dateFin"
+              (change)="onDateChange()"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+            />
+          </div>
+        </div>
+
+        <!-- Statistiques globales -->
+        <div class="bg-gray-50 rounded-lg p-4">
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Statistiques</h3>
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div>
+              <p class="text-sm text-gray-600">Total collectes</p>
+              <p class="text-2xl font-bold text-main">{{ activites.total_collectes }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Montant total</p>
+              <p class="text-2xl font-bold text-main">{{ activites.total_montant | number:'1.0-0' }} FCFA</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Jours actifs</p>
+              <p class="text-2xl font-bold text-main">{{ activites.nombre_jours_actifs }}</p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Moyenne/jour</p>
+              <p class="text-2xl font-bold text-main">{{ activites.moyenne_collectes_par_jour ? (activites.moyenne_collectes_par_jour | number:'1.1-1') : '-' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Liste des activités par jour -->
+        <div>
+          <h3 class="text-lg font-semibold text-gray-900 mb-4">Activités par jour</h3>
+          @if (activites.activites.length === 0) {
+            <p class="text-center text-gray-500 py-8">Aucune activité pour cette période</p>
+          } @else {
+            <div class="overflow-x-auto">
+              <table class="min-w-full bg-white rounded-lg shadow">
+                <thead class="bg-main text-white">
+                  <tr>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Date</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Nombre collectes</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Montant</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Première collecte</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Dernière collecte</th>
+                    <th class="px-4 py-3 text-left text-sm font-semibold">Durée travail</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                  @for (activite of activites.activites; track activite.date) {
+                    <tr class="hover:bg-gray-50">
+                      <td class="px-4 py-3 text-sm text-gray-900">
+                        {{ formatDate(activite.date) }}
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-900">
+                        {{ activite.nombre_collectes }}
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-900 font-semibold">
+                        {{ activite.montant_total | number:'1.0-0' }} FCFA
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-600">
+                        {{ activite.premiere_collecte ? formatTime(activite.premiere_collecte) : '-' }}
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-600">
+                        {{ activite.derniere_collecte ? formatTime(activite.derniere_collecte) : '-' }}
+                      </td>
+                      <td class="px-4 py-3 text-sm text-gray-600">
+                        {{ formatDuree(activite.duree_travail_minutes) }}
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+      </div>
+    }
+    </app-modal>
+  }
+
+  <!-- Barre de recherche -->
+  <div class="mb-6">
+    <div class="flex gap-4">
+      <input
+        type="text"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        placeholder="Rechercher un collecteur..."
+        class="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-main"
+      />
+      <button
+        (click)="onSearch()"
+        class="px-6 py-2 bg-main text-white rounded-lg hover:bg-main/90"
+      >
+        Rechercher
+      </button>
+    </div>
+  </div>
+
+  <!-- Tableau des collecteurs -->
+  @if (loading) {
+    <div class="text-center py-8">
+      <p class="text-gray-500">Chargement...</p>
+    </div>
+  } @else {
+    <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm text-gray-600">
+          <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+            <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+              <th class="px-6 py-4 text-left">Collecteur</th>
+              <th class="px-6 py-4 text-left">Coordonnées</th>
+              <th class="px-6 py-4 text-left">Matricule / Zone</th>
+              <th class="px-6 py-4 text-left">Statuts</th>
+              <th class="px-6 py-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (collecteur of collecteurs; track collecteur.id) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ collecteur.nom }} {{ collecteur.prenom }}</p>
+                  <p class="text-xs text-gray-500">Créé le {{ collecteur.created_at | date:'dd/MM/yyyy' }}</p>
+                </td>
+                <td class="px-6 py-4">
+                  <p class="text-sm font-medium text-gray-900">{{ collecteur.email }}</p>
+                  <p class="text-xs text-gray-500">{{ collecteur.telephone }}</p>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-100 text-slate-600 text-xs font-semibold">
+                    <svg class="size-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M4 7h16M4 12h16M4 17h16"/>
+                    </svg>
+                    Matricule : {{ collecteur.matricule }}
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="flex flex-wrap gap-2">
+                    <span [class]="'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ' + getStatutBadgeClass(collecteur.statut)">
+                      <span class="size-2 rounded-full bg-current/40"></span>
+                      {{ collecteur.statut === 'active' ? 'Actif' : 'Désactivé' }}
+                    </span>
+                    <span [class]="'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold ' + getEtatBadgeClass(collecteur.etat)">
+                      <span class="size-2 rounded-full bg-current/40"></span>
+                      {{ collecteur.etat === 'connecte' ? 'Connecté' : 'Déconnecté' }}
+                    </span>
+                  </div>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <div class="inline-flex gap-2">
+                    <button
+                      (click)="viewDevices(collecteur)"
+                      class="px-3 py-1.5 rounded-lg border border-purple-200 text-xs font-semibold text-purple-600 hover:bg-purple-50"
+                      title="Gérer les appareils"
+                    >
+                      Appareils
+                    </button>
+                    <button
+                      (click)="viewActivites(collecteur)"
+                      class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      Activités
+                    </button>
+                    <button
+                      (click)="editCollecteur(collecteur)"
+                      class="px-3 py-1.5 rounded-lg bg-blue-100 text-blue-700 text-xs font-semibold hover:bg-blue-200"
+                    >
+                      Modifier
+                    </button>
+                    <button
+                      (click)="toggleStatut(collecteur)"
+                      class="px-3 py-1.5 rounded-lg bg-gray-100 text-gray-700 text-xs font-semibold hover:bg-gray-200"
+                    >
+                      {{ collecteur.statut === 'active' ? 'Désactiver' : 'Activer' }}
+                    </button>
+                    @if (collecteur.statut === 'active') {
+                      <button
+                        (click)="toggleConnexion(collecteur)"
+                        class="px-3 py-1.5 rounded-lg bg-green-100 text-green-700 text-xs font-semibold hover:bg-green-200"
+                      >
+                        {{ collecteur.etat === 'connecte' ? 'Déconnecter' : 'Connecter' }}
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="5" class="px-6 py-12 text-center text-gray-500">
+                  Aucun collecteur trouvé
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+    
+    <!-- Pagination -->
+    @if (!loading && collecteurs.length > 0) {
+      <app-pagination
+        [currentPage]="currentPage"
+        [totalPages]="totalPages"
+        [pageSize]="pageSize"
+        [totalItems]="totalItems"
+        (pageChange)="onPageChange($event)"
+        (pageSizeChange)="onPageSizeChange($event)"
+      />
+    }
+  }
+</app-contener>

@@ -1,0 +1,504 @@
+<div class="relances-container p-6">
+  <div class="mb-6">
+    <h1 class="text-3xl font-bold text-gray-900 mb-2">Gestion des Relances</h1>
+    <p class="text-gray-600">Gérez les relances envoyées aux contribuables en retard de paiement</p>
+  </div>
+
+  @if (error) {
+    <div class="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+      {{ error }}
+    </div>
+  }
+
+  <!-- Statistiques -->
+  @if (stats) {
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Total relances</div>
+        <div class="text-2xl font-bold text-gray-900">{{ stats.total_relances }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Envoyées</div>
+        <div class="text-2xl font-bold text-green-600">{{ stats.relances_envoyees }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">En attente</div>
+        <div class="text-2xl font-bold text-yellow-600">{{ stats.relances_en_attente }}</div>
+      </div>
+      <div class="bg-white p-4 rounded-lg shadow border">
+        <div class="text-sm text-gray-600">Taux de réponse</div>
+        <div class="text-2xl font-bold text-blue-600">{{ stats.taux_reponse | number:'1.1-1' }}%</div>
+      </div>
+    </div>
+  }
+
+  <!-- Actions -->
+  <div class="mb-6 flex gap-4">
+    <button
+      (click)="openCreateModal()"
+      [disabled]="loading"
+      class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
+    >
+      Créer une relance manuelle
+    </button>
+    <button
+      (click)="genererRelancesAutomatiques()"
+      [disabled]="loading"
+      class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90 disabled:opacity-50"
+    >
+      Générer relances automatiques
+    </button>
+  </div>
+
+  <!-- Filtres -->
+  <div class="bg-white p-4 rounded-lg shadow border mb-6">
+    <h2 class="text-lg font-semibold mb-4">Filtres</h2>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Type de relance</label>
+        <select
+          [(ngModel)]="filters.type_relance"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">Tous</option>
+          <option value="sms">SMS</option>
+          <option value="email">Email</option>
+          <option value="appel">Appel</option>
+          <option value="courrier">Courrier</option>
+          <option value="visite">Visite</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+        <select
+          [(ngModel)]="filters.statut"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+          <option value="">Tous</option>
+          <option value="en_attente">En attente</option>
+          <option value="envoyee">Envoyée</option>
+          <option value="echec">Échec</option>
+          <option value="annulee">Annulée</option>
+        </select>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+        <input
+          type="date"
+          [(ngModel)]="filters.date_debut"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+        <input
+          type="date"
+          [(ngModel)]="filters.date_fin"
+          class="w-full px-3 py-2 border border-gray-300 rounded-lg"
+        >
+      </div>
+      <div class="flex items-end gap-2">
+        <button
+          (click)="applyFilters()"
+          class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90"
+        >
+          Appliquer
+        </button>
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+        >
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des relances -->
+  <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-gray-600">
+        <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+          <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+            <th class="px-6 py-4 text-left">Contribuable</th>
+            <th class="px-6 py-4 text-left">Canal</th>
+            <th class="px-6 py-4 text-left">Montant dû</th>
+            <th class="px-6 py-4 text-left">Planification</th>
+            <th class="px-6 py-4 text-left">Statut</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          @if (loading) {
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-gray-500">Chargement...</td>
+            </tr>
+          } @else if (relances.length === 0) {
+            <tr>
+              <td colspan="6" class="px-6 py-12 text-center text-gray-500">Aucune relance trouvée</td>
+            </tr>
+          } @else {
+            @for (relance of relances; track relance.id) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4">
+                  <div class="flex items-center gap-3">
+                    <div class="size-10 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 font-semibold">
+                      {{ relance.contribuable?.nom?.charAt(0) || '?' }}
+                    </div>
+                    <div>
+                      <p class="font-semibold text-gray-900">{{ relance.contribuable?.nom }} {{ relance.contribuable?.prenom }}</p>
+                      <p class="text-xs text-gray-500">{{ relance.contribuable?.telephone }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                    <svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M12 1v22M4 5h16c.552 0 1 .448 1 1v12c0 .552-.448 1-1 1H4c-.552 0-1-.448-1-1V6c0-.552.448-1 1-1z"/>
+                    </svg>
+                    {{ getTypeRelanceLabel(relance.type_relance) }}
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="font-semibold text-gray-900">{{ relance.montant_due | number:'1.0-0' }} FCFA</span>
+                  @if (relance.date_echeance) {
+                    <p class="text-xs text-gray-500">Échéance : {{ relance.date_echeance | date:'dd/MM/yyyy' }}</p>
+                  }
+                </td>
+                <td class="px-6 py-4 text-sm">
+                  <p class="font-medium text-gray-900">{{ relance.date_planifiee | date:'dd MMM yyyy' }}</p>
+                  <p class="text-xs text-gray-500">{{ relance.date_planifiee | date:'HH:mm' }}</p>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold {{ getStatutClass(relance.statut) }}">
+                    <span class="size-2.5 rounded-full bg-current/40"></span>
+                    {{ relance.statut }}
+                  </span>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <div class="inline-flex gap-2">
+                    <button
+                      class="px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
+                    >
+                      Détails
+                    </button>
+                    @if (relance.statut === 'en_attente') {
+                      <button
+                        (click)="envoyerRelance(relance.id)"
+                        class="px-3 py-1.5 rounded-lg bg-main text-white text-xs font-semibold hover:bg-main/90"
+                      >
+                        Marquer envoyée
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination -->
+    @if (getTotalPages() > 1) {
+      <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+        <div class="text-sm text-gray-700">
+          Page {{ currentPage + 1 }} sur {{ getTotalPages() }} ({{ total }} relances)
+        </div>
+        <div class="flex gap-2">
+          <button
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 0"
+            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
+          >
+            Précédent
+          </button>
+          <button
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage >= getTotalPages() - 1"
+            class="px-3 py-1 border border-gray-300 rounded-lg disabled:opacity-50"
+          >
+            Suivant
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- Modal de création de relance -->
+@if (showCreateModal) {
+  <div class="relance-modal fixed inset-0 z-50">
+    <div class="relance-modal__backdrop"></div>
+    <div class="relance-modal__panel">
+      <div class="relance-modal__header">
+        <div>
+          <p class="text-xs uppercase tracking-[0.3em] text-slate-400 mb-2">Relance manuelle</p>
+          <h2 class="text-2xl font-semibold text-slate-900">Composer une nouvelle relance</h2>
+          <p class="text-sm text-slate-500 mt-1">Sélectionnez un ou plusieurs contribuables puis définissez le message global ou personnalisé.</p>
+        </div>
+        <button (click)="closeCreateModal()" class="relance-modal__close" aria-label="Fermer la fenêtre">
+          <span aria-hidden="true">×</span>
+        </button>
+      </div>
+
+      @if (error) {
+        <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          {{ error }}
+        </div>
+      }
+
+      <form (ngSubmit)="createRelancesManuelles()" class="relance-form">
+        <div class="relance-form__grid">
+          <section class="relance-card relance-form__main">
+            <div class="relance-card__header">
+              <div>
+                <h3>Destinataires</h3>
+                <p>Ajoutez autant de contribuables que nécessaire, chacun peut recevoir un message ou un montant spécifique.</p>
+              </div>
+              <button type="button" (click)="addDestinataire()" class="btn-link">
+                + Ajouter un destinataire
+              </button>
+            </div>
+
+            @if (hasSelectedContribuables()) {
+              <div class="selected-chips">
+                @for (dest of newRelance.contribuables; track dest.contribuable_id) {
+                  @if (dest.contribuable) {
+                    <span class="chip">
+                      {{ dest.contribuable.nom }} {{ dest.contribuable.prenom }}
+                      <small>{{ dest.contribuable.telephone }}</small>
+                    </span>
+                  }
+                }
+              </div>
+            }
+
+            <div class="space-y-4">
+              @for (dest of newRelance.contribuables; let i = $index; track i) {
+                <div class="dest-card">
+                  <div class="dest-card__header">
+                    <div class="dest-card__title">
+                      <div class="avatar">{{ dest.contribuable?.nom?.[0] || 'N' }}</div>
+                      <div>
+                        <p class="font-semibold text-slate-900">
+                          {{ dest.contribuable?.nom || 'Contribuable non défini' }} {{ dest.contribuable?.prenom }}
+                        </p>
+                        <p class="text-xs text-slate-500">
+                          {{ dest.contribuable?.telephone || 'Sélectionnez un contribuable' }}
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      class="dest-card__remove"
+                      (click)="removeDestinataire(i)"
+                      [disabled]="newRelance.contribuables.length === 1"
+                    >
+                      Retirer
+                    </button>
+                  </div>
+
+                  <div class="field">
+                    <label>Contribuable *</label>
+                    <div class="relative">
+                      <input
+                        type="text"
+                        [(ngModel)]="searchContribuableTerm"
+                        (input)="searchContribuablesFor(i)"
+                        name="searchContribuable{{i}}"
+                        placeholder="Nom, témoin ou numéro"
+                        class="input"
+                      >
+                      <span class="field-hint">Tapez au moins 2 caractères</span>
+
+                      @if (contribuables.length > 0) {
+                        <div class="search-results">
+                          @for (contribuable of contribuables; track contribuable.id) {
+                            <button type="button" (click)="selectContribuableFor(i, contribuable)" class="search-results__item">
+                              <div class="font-medium text-slate-900">{{ contribuable.nom }} {{ contribuable.prenom }}</div>
+                              <div class="text-xs text-slate-500">{{ contribuable.telephone }}</div>
+                            </button>
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+
+                  <div class="dest-card__grid">
+                    <div class="field">
+                      <label>Téléphone à utiliser (optionnel)</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="dest.telephone_override"
+                        name="telephone_override{{i}}"
+                        class="input"
+                        placeholder="Nouveau numéro si différent"
+                      >
+                    </div>
+                    <div class="field">
+                      <label>Montant spécifique (optionnel)</label>
+                      <input
+                        type="number"
+                        [(ngModel)]="dest.montant_due"
+                        name="montant_due{{i}}"
+                        class="input"
+                        placeholder="Par défaut: montant global"
+                      >
+                    </div>
+                    <div class="field">
+                      <label>Échéance spécifique (optionnel)</label>
+                      <input
+                        type="datetime-local"
+                        [(ngModel)]="dest.date_echeance"
+                        name="date_echeance{{i}}"
+                        class="input"
+                      >
+                    </div>
+                    <div class="field">
+                      <label>Message personnalisé (optionnel)</label>
+                      <input
+                        type="text"
+                        [(ngModel)]="dest.message"
+                        name="message{{i}}"
+                        class="input"
+                        placeholder="Sinon message global"
+                      >
+                    </div>
+                  </div>
+                </div>
+              }
+            </div>
+          </section>
+
+          <aside class="relance-form__aside">
+            <div class="relance-card space-y-4">
+              <div class="field">
+                <label>Type de relance *</label>
+                <select
+                  [(ngModel)]="newRelance.type_relance"
+                  name="type_relance"
+                  required
+                  class="input"
+                >
+                  <option value="sms">SMS</option>
+                  <option value="email">Email</option>
+                  <option value="appel">Appel téléphonique</option>
+                  <option value="courrier">Courrier</option>
+                  <option value="visite">Visite</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Montant dû global (optionnel)</label>
+                <input
+                  type="number"
+                  [(ngModel)]="newRelance.montant_due"
+                  name="montant_due"
+                  min="0"
+                  step="0.01"
+                  class="input"
+                />
+              </div>
+
+              <div class="field">
+                <label>Date planifiée *</label>
+                <input
+                  type="datetime-local"
+                  [(ngModel)]="newRelance.date_planifiee"
+                  name="date_planifiee"
+                  required
+                  class="input"
+                />
+              </div>
+
+              <div class="field">
+                <label>Date d'échéance (optionnel)</label>
+                <input
+                  type="datetime-local"
+                  [(ngModel)]="newRelance.date_echeance"
+                  name="date_echeance"
+                  class="input"
+                />
+              </div>
+
+              <div class="field">
+                <label>Message global (optionnel)</label>
+                <textarea
+                  [(ngModel)]="newRelance.message"
+                  name="message"
+                  rows="3"
+                  placeholder="Message envoyé si aucun message personnalisé n'est défini"
+                  class="input"
+                ></textarea>
+              </div>
+
+              <div class="field">
+                <label>Notes internes</label>
+                <textarea
+                  [(ngModel)]="newRelance.notes"
+                  name="notes"
+                  rows="2"
+                  placeholder="Ajoutez une précision visible uniquement par les équipes internes"
+                  class="input"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="relance-card relance-summary">
+              <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Récapitulatif</p>
+              <h4 class="text-lg font-semibold text-slate-900 mt-2">
+                {{ newRelance.contribuables.length }} destinataire(s)
+              </h4>
+              <ul class="summary-list">
+                <li>
+                  <span>Canal</span>
+                  <strong>{{ getTypeRelanceLabel(newRelance.type_relance) }}</strong>
+                </li>
+                <li>
+                  <span>Date planifiée</span>
+                  <strong>{{ newRelance.date_planifiee | date:'dd/MM HH:mm' }}</strong>
+                </li>
+                <li>
+                  <span>Montant global</span>
+                  <strong>
+                    @if (newRelance.montant_due) {
+                      {{ newRelance.montant_due | number:'1.0-0' }} FCFA
+                    } @else {
+                      Non défini
+                    }
+                  </strong>
+                </li>
+              </ul>
+              <p class="text-xs text-slate-500 mt-3">
+                Les montants ou messages spécifiés dans chaque carte de destinataire priment sur le contexte global.
+              </p>
+            </div>
+          </aside>
+        </div>
+
+        <div class="relance-form__footer">
+          <button
+            type="button"
+            (click)="closeCreateModal()"
+            class="btn-secondary"
+          >
+            Annuler
+          </button>
+          <button
+            type="submit"
+            [disabled]="loading"
+            class="btn-primary"
+          >
+            @if (loading) {
+              Création...
+            } @else {
+              Créer la relance
+            }
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+

@@ -1,0 +1,49 @@
+services:
+  db:
+    image: postgis/postgis:16-3.4
+    container_name: taxe_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: taxe_municipale
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - taxe_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taxe_municipale"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: taxe_backend
+    restart: unless-stopped
+    env_file:
+      - ./backend/.env.docker
+    environment:
+      # Surcharge éventuelle
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/taxe_municipale
+      ENVIRONMENT: docker
+      SMTP_HOST: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USER: bebanemb@gmail.com
+      SMTP_PASSWORD: duchtldgstxbltmc
+      SMTP_FROM: bebanemb@gmail.com
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./backend/uploads:/app/uploads
+      - ./backend:/app
+
+volumes:
+  taxe_db_data:
+
+
