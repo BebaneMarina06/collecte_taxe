@@ -24,6 +24,44 @@ class CollecteAnnulationRequest(BaseModel):
     raison: str = Field(..., min_length=3, description="Raison de l'annulation")
 
 
+class ContribuableDetailResponse(BaseModel):
+    """Réponse détaillée des informations d'un contribuable pour auto-remplissage"""
+    id: int
+    nom: str
+    prenom: Optional[str] = None
+    telephone: str
+    email: Optional[str] = None
+    adresse: Optional[str] = None
+    nom_activite: Optional[str] = None
+    type_contribuable: Optional[dict] = None
+    quartier: Optional[dict] = None
+    collecteur: Optional[dict] = None
+    latitude: Optional[Decimal] = None
+    longitude: Optional[Decimal] = None
+    photo_url: Optional[str] = None
+    
+    class Config:
+        from_attributes = True
+
+
+@router.get("/contribuable/{contribuable_id}", response_model=ContribuableDetailResponse)
+def get_contribuable_details(contribuable_id: int, db: Session = Depends(get_db)):
+    """Récupère les informations détaillées d'un contribuable pour auto-remplissage lors d'une collecte"""
+    from sqlalchemy.orm import joinedload
+    from database.models import Contribuable
+    
+    contribuable = db.query(Contribuable).options(
+        joinedload(Contribuable.type_contribuable),
+        joinedload(Contribuable.quartier),
+        joinedload(Contribuable.collecteur)
+    ).filter(Contribuable.id == contribuable_id).first()
+    
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    return contribuable
+
+
 @router.get("/", response_model=List[InfoCollecteResponse])
 def get_collectes(
     skip: int = Query(0, ge=0),

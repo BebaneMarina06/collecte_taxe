@@ -1,0 +1,530 @@
+<app-contener>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Gestion des Taxations</h1>
+    <p class="text-gray-600 mt-1">{{ taxations.length }} taxations trouvées</p>
+  </div>
+
+  <!-- Barre de recherche et actions -->
+  <div class="flex justify-between py-3 bg-background rounded-lg my-8 px-4">
+    <div class="grid grid-cols-1">
+      <input 
+        type="text" 
+        name="search" 
+        id="search"
+        [(ngModel)]="searchTerm"
+        (keyup.enter)="onSearch()"
+        class="col-start-1 row-start-1 block w-full rounded-md bg-white py-1.5 pl-10 pr-3 text-base text-gray-900 outline outline-1 -outline-offset-1 outline-gray-300 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-indigo-600 sm:pl-9 sm:text-sm/6"
+        placeholder="Rechercher une taxation...">
+      <svg class="pointer-events-none col-start-1 row-start-1 ml-3 size-5 self-center text-main-text-color sm:size-4"
+        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+        <g fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="11.5" cy="11.5" r="9.5" />
+          <path stroke-linecap="round" d="M18.5 18.5L22 22" />
+        </g>
+      </svg>
+    </div>
+
+    <div class="flex gap-3 items-center">
+      <button class="flex gap-2 items-center px-4 bg-white py-2 rounded-lg border">
+        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-width="1.5"
+            d="M19 3H5c-1.414 0-2.121 0-2.56.412S2 4.488 2 5.815v.69c0 1.037 0 1.556.26 1.986s.733.698 1.682 1.232l2.913 1.64c.636.358.955.537 1.183.735c.474.411.766.895.898 1.49c.064.284.064.618.064 1.285v2.67c0 .909 0 1.364.252 1.718c.252.355.7.53 1.594.88c1.879.734 2.818 1.101 3.486.683S15 19.452 15 17.542v-2.67c0-.666 0-1 .064-1.285a2.68 2.68 0 0 1 .899-1.49c.227-.197.546-.376 1.182-.735l2.913-1.64c.948-.533 1.423-.8 1.682-1.23c.26-.43.26-.95.26-1.988v-.69c0-1.326 0-1.99-.44-2.402C21.122 3 20.415 3 19 3Z" />
+        </svg>
+        <span>Filtrer</span>
+      </button>
+      <button class="flex gap-2 items-center px-4 bg-white py-2 rounded-lg border">
+        <svg class="size-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path fill="currentColor"
+            d="M14 5v4C7 10 4 15 3 20c2.5-3.5 6-5.1 11-5.1V19l7-7zm2 4.83L18.17 12L16 14.17V12.9h-2c-2.07 0-3.93.38-5.66.95c1.4-1.39 3.2-2.48 5.94-2.85l1.72-.27z" />
+        </svg>
+        <span>Exporter</span>
+      </button>
+      <button (click)="openCreateModal()" type="button"
+        class="inline-flex items-center gap-x-3 rounded-md bg-main px-5 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-main/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">
+        <svg class="size-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+          <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+            d="M12 5v14m-7-7h14" />
+        </svg>
+        Nouvelle taxation
+      </button>
+    </div>
+  </div>
+
+  <!-- Statistiques -->
+  <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden p-6 mb-6">
+    <div class="grid grid-cols-4 gap-6">
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+        <p class="text-sm text-gray-600 mb-1">Total</p>
+        <p class="text-2xl font-bold text-gray-900">{{ stats.total_taxations }}</p>
+      </div>
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+        <p class="text-sm text-gray-600 mb-1">Attendu</p>
+        <p class="text-2xl font-bold text-gray-900">{{ formatMontant(stats.montant_total_attendu || 0) }}</p>
+      </div>
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+        <p class="text-sm text-gray-600 mb-1">Payé</p>
+        <p class="text-2xl font-bold text-green-600">{{ formatMontant(stats.montant_total_paye || 0) }}</p>
+      </div>
+      <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-100">
+        <p class="text-sm text-gray-600 mb-1">Taux</p>
+        <p class="text-2xl font-bold text-gray-900">{{ (stats.taux_recouvrement || 0).toFixed(2) }}%</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="loading" class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+    <div class="px-6 py-12 text-center text-gray-500">
+      Chargement...
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div *ngIf="error && !loading" class="rounded-lg bg-red-50 border border-red-200 p-4 mb-6">
+    <p class="text-red-700">{{ error }}</p>
+  </div>
+
+  <!-- Tableau -->
+  <div *ngIf="!loading && !error" class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-gray-600">
+        <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+          <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+            <th class="px-6 py-4 text-left">ID</th>
+            <th class="px-6 py-4 text-left">Contribuable</th>
+            <th class="px-6 py-4 text-left">Taxe</th>
+            <th class="px-6 py-4 text-left">Période</th>
+            <th class="px-6 py-4 text-left">Montant</th>
+            <th class="px-6 py-4 text-left">Statut</th>
+            <th class="px-6 py-4 text-left">Échéance</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+          @if (taxations.length === 0) {
+            <tr>
+              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                Aucune taxation trouvée
+              </td>
+            </tr>
+          } @else {
+            @for (taxation of taxations; track taxation.id) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <td class="px-6 py-4">
+                  <span class="font-semibold text-gray-900">#{{ taxation.id }}</span>
+                </td>
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ taxation.contribuable_nom }}</p>
+                </td>
+                <td class="px-6 py-4">
+                  <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">
+                    {{ taxation.taxe_nom }}
+                  </span>
+                </td>
+                <td class="px-6 py-4">
+                  <p class="text-sm">{{ formatPeriode(taxation) }}</p>
+                </td>
+                <td class="px-6 py-4">
+                  <div class="space-y-1">
+                    <p class="text-xs text-gray-500">Attendu: <span class="font-semibold text-gray-900">{{ formatMontant(taxation.montant_attendu) }}</span></p>
+                    <p class="text-xs text-gray-500">Payé: <span class="font-semibold text-green-600">{{ formatMontant(taxation.montant_paye) }}</span></p>
+                    <p class="text-xs text-gray-500">Restant: <span class="font-semibold text-red-600">{{ formatMontant(taxation.montant_restant) }}</span></p>
+                  </div>
+                </td>
+                <td class="px-6 py-4">
+                  <span [ngClass]="getStatusClass(taxation.statut)" 
+                        class="px-2.5 py-1 rounded-full text-xs font-semibold">
+                    {{ taxation.statut }}
+                  </span>
+                  @if (taxation.est_en_retard) {
+                    <span class="ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                      En retard
+                    </span>
+                  }
+                </td>
+                <td class="px-6 py-4">
+                  <p class="text-sm">{{ taxation.date_echeance | date:'dd/MM/yyyy' }}</p>
+                </td>
+                <td class="px-6 py-4 text-right">
+                  <div class="flex justify-end gap-2">
+                    <button (click)="viewTaxation(taxation)" 
+                            class="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 transition-colors"
+                            title="Voir">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                      </svg>
+                    </button>
+                    <button (click)="collectTaxation(taxation)" 
+                            class="p-2 rounded-lg bg-green-500 text-white hover:bg-green-600 transition-colors"
+                            title="Collecter">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                      </svg>
+                    </button>
+                    <button (click)="deleteTaxation(taxation.id)" 
+                            class="p-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition-colors"
+                            title="Supprimer">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Modal création -->
+  @if (showCreateModal) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeCreateModal()">
+      <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 rounded-t-2xl">
+          <div class="flex justify-between items-center mb-4">
+            <h2 class="text-xl font-bold text-gray-900">Nouvelle Taxation</h2>
+            <button (click)="closeCreateModal()" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Indicateur d'étapes -->
+          <div class="flex items-center justify-between">
+            <div class="flex-1 flex items-center">
+              <div [class.bg-main]="createModalStep >= 1" [class.bg-gray-300]="createModalStep < 1"
+                   class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold">
+                1
+              </div>
+              <div [class.bg-main]="createModalStep >= 2" [class.bg-gray-300]="createModalStep < 2"
+                   class="flex-1 h-1 mx-2"></div>
+            </div>
+            <div class="flex-1 flex items-center">
+              <div [class.bg-main]="createModalStep >= 2" [class.bg-gray-300]="createModalStep < 2"
+                   class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold">
+                2
+              </div>
+              <div [class.bg-main]="createModalStep >= 3" [class.bg-gray-300]="createModalStep < 3"
+                   class="flex-1 h-1 mx-2"></div>
+            </div>
+            <div [class.bg-main]="createModalStep >= 3" [class.bg-gray-300]="createModalStep < 3"
+                 class="w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold">
+              3
+            </div>
+          </div>
+
+          <!-- Labels des étapes -->
+          <div class="grid grid-cols-3 gap-2 mt-2 text-xs text-center">
+            <div [class.text-main]="createModalStep === 1" [class.font-semibold]="createModalStep === 1">
+              Sélection
+            </div>
+            <div [class.text-main]="createModalStep === 2" [class.font-semibold]="createModalStep === 2">
+              Période
+            </div>
+            <div [class.text-main]="createModalStep === 3" [class.font-semibold]="createModalStep === 3">
+              Détails
+            </div>
+          </div>
+        </div>
+
+        <form (ngSubmit)="createTaxation()" class="p-6">
+          <!-- Étape 1: Sélection -->
+          @if (createModalStep === 1) {
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Contribuable *</label>
+                <select [(ngModel)]="createForm.contribuable_id" name="contribuable_id" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option [value]="null">Sélectionner un contribuable...</option>
+                  <option *ngFor="let c of contribuables" [value]="c.id">
+                    {{ c.nom }} {{ c.prenom || '' }}
+                  </option>
+                </select>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Taxe *</label>
+                <select [(ngModel)]="createForm.taxe_id" name="taxe_id" required
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                  <option [value]="null">Sélectionner une taxe...</option>
+                  <option *ngFor="let t of taxes" [value]="t.id">
+                    {{ t.nom }} - {{ formatMontant(t.montant) }} FCFA
+                  </option>
+                </select>
+              </div>
+            </div>
+          }
+
+          <!-- Étape 2: Période -->
+          @if (createModalStep === 2) {
+            <div class="space-y-4">
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Date début *</label>
+                  <input type="date" [(ngModel)]="createForm.date_debut" name="date_debut" required
+                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Date fin *</label>
+                  <input type="date" [(ngModel)]="createForm.date_fin" name="date_fin" required
+                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Année *</label>
+                  <input type="number" [(ngModel)]="createForm.annee" name="annee" required
+                         class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-2">Mois</label>
+                  <select [(ngModel)]="createForm.mois" name="mois"
+                          class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <option [value]="null">Sélectionner...</option>
+                    <option *ngFor="let m of getMoisOptions()" [value]="m.value">
+                      {{ m.label }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Étape 3: Détails -->
+          @if (createModalStep === 3) {
+            <div class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Montant personnalisé</label>
+                <input type="number" [(ngModel)]="createForm.montant_custom" name="montant_custom"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                       placeholder="Laisser vide pour utiliser le montant de la taxe">
+                <p class="text-xs text-gray-500 mt-1">Si vide, le montant de la taxe sera utilisé</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-gray-700 mb-2">Date d'échéance</label>
+                <input type="date" [(ngModel)]="createForm.date_echeance" name="date_echeance"
+                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+              </div>
+
+              <!-- Récapitulatif -->
+              <div class="bg-gray-50 rounded-lg p-4 mt-6">
+                <h4 class="font-semibold text-gray-900 mb-3">Récapitulatif</h4>
+                <div class="space-y-2 text-sm">
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Contribuable:</span>
+                    <span class="font-medium">
+                      {{ getContribuableById(createForm.contribuable_id)?.nom }}
+                      {{ getContribuableById(createForm.contribuable_id)?.prenom }}
+                    </span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Taxe:</span>
+                    <span class="font-medium">{{ getTaxeById(createForm.taxe_id)?.nom }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Période:</span>
+                    <span class="font-medium">{{ createForm.date_debut }} → {{ createForm.date_fin }}</span>
+                  </div>
+                  <div class="flex justify-between">
+                    <span class="text-gray-600">Année/Mois:</span>
+                    <span class="font-medium">{{ createForm.annee }}{{ createForm.mois ? '/' + createForm.mois : '' }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+
+          <!-- Boutons de navigation -->
+          <div class="flex justify-between gap-3 pt-6 border-t border-gray-200 mt-6">
+            <div>
+              @if (createModalStep > 1) {
+                <button type="button" (click)="previousStep()"
+                        class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                  ← Précédent
+                </button>
+              }
+            </div>
+            <div class="flex gap-3">
+              <button type="button" (click)="closeCreateModal()"
+                      class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                Annuler
+              </button>
+              @if (createModalStep < 3) {
+                <button type="button" (click)="nextStep()"
+                        class="px-6 py-2 bg-main text-white rounded-lg hover:bg-main/90 transition-colors">
+                  Suivant →
+                </button>
+              } @else {
+                <button type="submit" [disabled]="loading"
+                        class="px-6 py-2 bg-main text-white rounded-lg hover:bg-main/90 transition-colors disabled:opacity-50">
+                  {{ loading ? 'Création...' : 'Créer la taxation' }}
+                </button>
+              }
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Détails -->
+  @if (showViewModal && selectedTaxation) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeViewModal()">
+      <div class="bg-white rounded-2xl shadow-xl max-w-3xl w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+          <h2 class="text-xl font-bold text-gray-900">Détails de la Taxation #{{ selectedTaxation.id }}</h2>
+          <button (click)="closeViewModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6 space-y-6">
+          <!-- Informations principales -->
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Contribuable</label>
+              <p class="text-gray-900 font-medium">{{ selectedTaxation.contribuable_nom }}</p>
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Taxe</label>
+              <span class="px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-sm font-semibold">
+                {{ selectedTaxation.taxe_nom }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Période -->
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Période</label>
+            <p class="text-gray-900">{{ formatPeriode(selectedTaxation) }}</p>
+          </div>
+
+          <!-- Montants -->
+          <div class="grid grid-cols-3 gap-4">
+            <div class="bg-blue-50 rounded-xl p-4">
+              <p class="text-sm text-gray-600 mb-1">Montant attendu</p>
+              <p class="text-xl font-bold text-gray-900">{{ formatMontant(selectedTaxation.montant_attendu) }} FCFA</p>
+            </div>
+            <div class="bg-green-50 rounded-xl p-4">
+              <p class="text-sm text-gray-600 mb-1">Montant payé</p>
+              <p class="text-xl font-bold text-green-600">{{ formatMontant(selectedTaxation.montant_paye) }} FCFA</p>
+            </div>
+            <div class="bg-red-50 rounded-xl p-4">
+              <p class="text-sm text-gray-600 mb-1">Restant dû</p>
+              <p class="text-xl font-bold text-red-600">{{ formatMontant(selectedTaxation.montant_restant) }} FCFA</p>
+            </div>
+          </div>
+
+          <!-- Statut et échéance -->
+          <div class="grid grid-cols-2 gap-6">
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Statut</label>
+              <span [ngClass]="getStatusClass(selectedTaxation.statut)" 
+                    class="px-3 py-1 rounded-full text-sm font-semibold">
+                {{ selectedTaxation.statut }}
+              </span>
+              @if (selectedTaxation.est_en_retard) {
+                <span class="ml-2 px-2 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                  En retard
+                </span>
+              }
+            </div>
+            <div>
+              <label class="block text-sm font-semibold text-gray-700 mb-2">Date d'échéance</label>
+              <p class="text-gray-900">{{ selectedTaxation.date_echeance | date:'dd/MM/yyyy' }}</p>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-3 pt-4 border-t border-gray-200">
+            <button (click)="closeViewModal()"
+                    class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+              Fermer
+            </button>
+            <button (click)="collectTaxation(selectedTaxation); closeViewModal()"
+                    class="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors">
+              Collecter le paiement
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Modal Collecte -->
+  @if (showCollectModal && selectedTaxation) {
+    <div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" (click)="closeCollectModal()">
+      <div class="bg-white rounded-2xl shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+        <div class="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center rounded-t-2xl">
+          <h2 class="text-xl font-bold text-gray-900">Collecter le Paiement</h2>
+          <button (click)="closeCollectModal()" class="text-gray-400 hover:text-gray-600">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="p-6">
+          <!-- Récapitulatif -->
+          <div class="bg-gray-50 rounded-xl p-4 mb-6">
+            <h3 class="font-semibold text-gray-900 mb-3">Récapitulatif</h3>
+            <div class="space-y-2 text-sm">
+              <div class="flex justify-between">
+                <span class="text-gray-600">Contribuable:</span>
+                <span class="font-medium text-gray-900">{{ selectedTaxation.contribuable_nom }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Taxe:</span>
+                <span class="font-medium text-gray-900">{{ selectedTaxation.taxe_nom }}</span>
+              </div>
+              <div class="flex justify-between">
+                <span class="text-gray-600">Période:</span>
+                <span class="font-medium text-gray-900">{{ formatPeriode(selectedTaxation) }}</span>
+              </div>
+              <div class="flex justify-between border-t border-gray-200 pt-2 mt-2">
+                <span class="text-gray-600">Restant dû:</span>
+                <span class="font-bold text-red-600">{{ formatMontant(selectedTaxation.montant_restant) }} FCFA</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Note -->
+          <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <div class="flex">
+              <svg class="w-5 h-5 text-blue-400 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+              </svg>
+              <div class="ml-3">
+                <p class="text-sm text-blue-700">
+                  Pour créer une collecte, utilisez le module "Collectes" où vous pourrez enregistrer les paiements et générer des reçus.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions -->
+          <div class="flex justify-end gap-3">
+            <button (click)="closeCollectModal()"
+                    class="px-6 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+              Annuler
+            </button>
+            <button (click)="navigateToCollecte(selectedTaxation); closeCollectModal()"
+                    class="px-6 py-2 bg-main text-white rounded-lg hover:bg-main/90 transition-colors">
+              Aller aux collectes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</app-contener>

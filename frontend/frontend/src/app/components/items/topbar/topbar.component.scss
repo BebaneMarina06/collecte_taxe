@@ -1,0 +1,31 @@
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: 280px; // Largeur de la sidebar
+  right: 0;
+  z-index: 40;
+  height: 48px;
+  min-height: 48px;
+  max-height: 48px;
+  margin: 0;
+  padding: 0 1rem;
+  background-color: white;
+  border-bottom: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  display: flex;
+  align-items: center;
+}
+
+// Sur mobile, adapter la topbar
+@media (max-width: 1024px) {
+  .top-bar {
+    left: 0; // Prend toute la largeur sur mobile
+  }
+}
+
+// Style pour le composant host
+:host {
+  display: block;
+  margin: 0;
+  padding: 0;
+}

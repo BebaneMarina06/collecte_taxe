@@ -1,0 +1,81 @@
+// Styles pour le dashboard
+:host {
+  display: block;
+  width: 100%;
+  background-color: #f9fafb;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+// S'assurer que les cartes ont une bonne apparence
+.grid {
+  width: 100%;
+}
+
+// Cartes statistiques modernisées
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(59, 130, 246, 0.3), transparent);
+    transform: translateX(-100%);
+    transition: transform 0.6s ease;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+
+    &::before {
+      transform: translateX(100%);
+    }
+  }
+
+  // Animation au chargement
+  @keyframes slideUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  animation: slideUp 0.5s ease-out;
+
+  // Délais différents pour chaque carte (6 cartes maintenant)
+  &:nth-child(1) { animation-delay: 0.1s; }
+  &:nth-child(2) { animation-delay: 0.15s; }
+  &:nth-child(3) { animation-delay: 0.2s; }
+  &:nth-child(4) { animation-delay: 0.25s; }
+  &:nth-child(5) { animation-delay: 0.3s; }
+  &:nth-child(6) { animation-delay: 0.35s; }
+}
+
+// Style pour les nombres avec animation
+.text-3xl {
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+// Sections avec des ombres douces
+.bg-white.rounded-xl {
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px -5px rgba(0, 0, 0, 0.08);
+  }
+}
