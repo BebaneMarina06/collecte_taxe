@@ -18,11 +18,10 @@ export class EtatCollecteursComponent implements OnInit {
   error: string | null = null;
 
   // Filtres
+  modeFiltre: 'jour' | 'plage' = 'jour';
   dateDebut: string = '';
   dateFin: string = '';
   dateSpecifique: string = this.getTodayDate();
-  collecteurId: string = '';
-  collecteurs: any[] = [];
 
   // Pagination
   itemsPerPage = 10;
@@ -40,7 +39,6 @@ export class EtatCollecteursComponent implements OnInit {
   constructor(private apiService: ApiService) {}
 
   ngOnInit(): void {
-    this.chargerCollecteurs();
     this.chargerEtats();
   }
 
@@ -49,15 +47,20 @@ export class EtatCollecteursComponent implements OnInit {
     return today.toISOString().split('T')[0];
   }
 
-  chargerCollecteurs(): void {
-    this.apiService.getCollecteurs().subscribe({
-      next: (data) => {
-        this.collecteurs = data;
-      },
-      error: (err) => {
-        console.error('Erreur lors du chargement des collecteurs:', err);
-      }
-    });
+  changerModeFiltre(): void {
+    if (this.modeFiltre === 'jour') {
+      this.dateDebut = '';
+      this.dateFin = '';
+      this.dateSpecifique = this.getTodayDate();
+    } else {
+      this.dateSpecifique = '';
+      // Définir les dates par défaut pour la plage (derniers 7 jours)
+      const today = new Date();
+      const lastWeek = new Date(today);
+      lastWeek.setDate(today.getDate() - 7);
+      this.dateFin = today.toISOString().split('T')[0];
+      this.dateDebut = lastWeek.toISOString().split('T')[0];
+    }
   }
 
   chargerEtats(): void {
@@ -66,17 +69,17 @@ export class EtatCollecteursComponent implements OnInit {
 
     const params: any = {};
 
-    if (this.dateSpecifique) {
+    // Mode jour spécifique
+    if (this.modeFiltre === 'jour' && this.dateSpecifique) {
       params.date_specifique = this.dateSpecifique;
-    } else {
+    }
+    // Mode plage de dates
+    else if (this.modeFiltre === 'plage') {
       if (this.dateDebut) params.date_debut = this.dateDebut;
       if (this.dateFin) params.date_fin = this.dateFin;
     }
 
-    if (this.collecteurId) {
-      params.collecteur_id = parseInt(this.collecteurId);
-    }
-
+    // Charger les états de TOUS les collecteurs
     this.apiService.getEtatCollecteurs(params).subscribe({
       next: (data) => {
         this.etats = data;
@@ -86,7 +89,7 @@ export class EtatCollecteursComponent implements OnInit {
       },
       error: (err) => {
         console.error('Erreur lors du chargement des états:', err);
-        this.error = 'Erreur lors du chargement des données';
+        this.error = 'Erreur lors du chargement des données. Veuillez réessayer.';
         this.loading = false;
       }
     });
@@ -122,20 +125,11 @@ export class EtatCollecteursComponent implements OnInit {
     }
   }
 
-  basculerFiltre(): void {
-    if (this.dateSpecifique) {
-      this.dateDebut = '';
-      this.dateFin = '';
-    } else {
-      this.dateSpecifique = '';
-    }
-  }
-
   reinitialiserFiltres(): void {
+    this.modeFiltre = 'jour';
+    this.dateSpecifique = this.getTodayDate();
     this.dateDebut = '';
     this.dateFin = '';
-    this.dateSpecifique = this.getTodayDate();
-    this.collecteurId = '';
     this.chargerEtats();
   }
 
