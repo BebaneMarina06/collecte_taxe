@@ -20,9 +20,16 @@ function createHttpParams(params: { [key: string]: any }): HttpParams {
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl = environment.apiUrl || 'http://localhost:8000/api';
+  private apiUrl: string;
 
   constructor(private http: HttpClient) {
+    // Forcer HTTPS pour Render dès le départ
+    let url = environment.apiUrl || 'http://localhost:8000/api';
+    if (url.includes('collecte-taxe.onrender.com') && url.startsWith('http://')) {
+      url = url.replace('http://', 'https://');
+    }
+    this.apiUrl = url;
+    
     console.log('[API] Using API URL:', this.apiUrl);
     console.log('[API] Environment check:', {
       isProduction: environment.production,
