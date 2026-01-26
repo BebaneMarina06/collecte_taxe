@@ -58,12 +58,9 @@ async def add_utf8_encoding(request: Request, call_next):
             )
     return response
 
-# Configuration CORS pour permettre les requêtes depuis le front-end Angular et l'app mobile
+# Configuration CORS pour permettre les requêtes depuis toutes les applications
 import os
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200").split(",")
-# En production, ajoutez l'URL de votre app mobile ici ou utilisez "*" pour développement
-if os.getenv("ENVIRONMENT") != "production":
-    cors_origins.append("*")  # Permettre toutes les origines en développement
+cors_origins = ["*"]  # Accepter toutes les origines (collecteur, admin, mobile, etc.)
 
 app.add_middleware(
     CORSMiddleware,
