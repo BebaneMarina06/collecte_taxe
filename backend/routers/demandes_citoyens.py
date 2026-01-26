@@ -25,7 +25,6 @@ router = APIRouter(
 
 
 @router.get("/", response_model=List[DemandeCitoyenResponse])
-@router.get("", response_model=List[DemandeCitoyenResponse])
 def get_demandes(
     contribuable_id: Optional[int] = Query(None, description="Filtrer par contribuable"),
     statut: Optional[StatutDemandeEnumSchema] = Query(None, description="Filtrer par statut"),

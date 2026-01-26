@@ -12,7 +12,6 @@ router = APIRouter(prefix="/api/services", tags=["services"])
 
 
 @router.get("/", response_model=List[dict])
-@router.get("", response_model=List[dict])
 def get_services(
     db: Session = Depends(get_db)
 ):

@@ -33,7 +33,7 @@ export class AssignTaxesContribuableComponent {
     this.loading = true;
     this.error = null;
 
-    this.apiService.getTaxes({ actif: true, limit: 1000 }).subscribe({
+    this.apiService.getTaxes().subscribe({
       next: (response: any) => {
         this.taxes = Array.isArray(response) ? response : (response.taxes || []);
         this.loading = false;

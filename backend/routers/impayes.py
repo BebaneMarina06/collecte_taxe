@@ -178,7 +178,6 @@ def detecter_impayes(
 
 
 @router.get("/", response_model=DossierImpayeListResponse)
-@router.get("", response_model=DossierImpayeListResponse)
 def get_impayes(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),

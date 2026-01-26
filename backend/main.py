@@ -43,8 +43,7 @@ import json
 app = FastAPI(
     title="API Collecte Taxe Municipale",
     description="API pour la gestion de la collecte de taxes municipales - Mairie de Libreville",
-    version="1.0.0",
-    redirect_slashes=False  # Désactiver les redirections automatiques du slash
+    version="1.0.0"
 )
 
 # Middleware pour forcer l'encodage UTF-8 dans les réponses

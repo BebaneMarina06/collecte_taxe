@@ -40,7 +40,6 @@ router = APIRouter(
 
 
 @router.get("/", response_model=CaissesListResponse)
-@router.get("", response_model=CaissesListResponse)
 def get_caisses(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),

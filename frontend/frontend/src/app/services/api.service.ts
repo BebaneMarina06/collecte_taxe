@@ -20,16 +20,9 @@ function createHttpParams(params: { [key: string]: any }): HttpParams {
   providedIn: 'root'
 })
 export class ApiService {
-  private apiUrl: string;
+  private apiUrl = environment.apiUrl || 'http://localhost:8000/api';
 
   constructor(private http: HttpClient) {
-    // Forcer HTTPS pour Render dès le départ
-    let url = environment.apiUrl || 'http://localhost:8000/api';
-    if (url.includes('collecte-taxe.onrender.com') && url.startsWith('http://')) {
-      url = url.replace('http://', 'https://');
-    }
-    this.apiUrl = url;
-    
     console.log('[API] Using API URL:', this.apiUrl);
     console.log('[API] Environment check:', {
       isProduction: environment.production,
@@ -126,19 +119,19 @@ export class ApiService {
   // Demandes citoyens
   getDemandesCitoyens(params?: any): Observable<any> {
     const httpParams = params ? createHttpParams(params) : new HttpParams();
-    return this.http.get(`${this.apiUrl}/demandes-citoyens`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+    return this.http.get(`${this.apiUrl}/demandes`, httpParams.keys().length > 0 ? { params: httpParams } : {});
   }
 
   createDemandeCitoyen(payload: any): Observable<any> {
-    return this.http.post(`${this.apiUrl}/demandes-citoyens`, payload);
+    return this.http.post(`${this.apiUrl}/demandes`, payload);
   }
 
   updateDemandeCitoyen(id: number, payload: any): Observable<any> {
-    return this.http.put(`${this.apiUrl}/demandes-citoyens/${id}`, payload);
+    return this.http.put(`${this.apiUrl}/demandes/${id}`, payload);
   }
 
   deleteDemandeCitoyen(id: number): Observable<any> {
-    return this.http.delete(`${this.apiUrl}/demandes-citoyens/${id}`);
+    return this.http.delete(`${this.apiUrl}/demandes/${id}`);
   }
 
   // CRON dettes
