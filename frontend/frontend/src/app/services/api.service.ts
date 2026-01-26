@@ -879,57 +879,37 @@ export class ApiService {
 @Injectable()
 export class CorsInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    // Forcer HTTPS pour les requêtes vers Render
+    // Forcer HTTPS immédiatement pour Render - AVANT que le navigateur essaie HTTP
     let modifiedUrl = req.url;
-    if (req.url.includes('collecte-taxe.onrender.com') && req.url.startsWith('http://')) {
-      modifiedUrl = req.url.replace('http://', 'https://');
-      console.log(`[CORS] 🔒 Forcing HTTPS: ${req.url} -> ${modifiedUrl}`);
+    
+    // Si c'est une URL Render ET qu'elle commence par http://, la passer immédiatement en https://
+    if (req.url.includes('collecte-taxe.onrender.com')) {
+      if (req.url.startsWith('http://')) {
+        modifiedUrl = req.url.replace('http://', 'https://');
+        console.log(`[CORS] 🔒 Forcing HTTPS immediately: ${req.url.substring(0, 60)}... -> ${modifiedUrl.substring(0, 60)}...`);
+      }
     }
 
     const modifiedReq = req.clone({
       url: modifiedUrl,
       setHeaders: {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache'
+        'Pragma': 'no-cache',
+        'X-Requested-With': 'XMLHttpRequest'
       }
     });
     
     return next.handle(modifiedReq).pipe(
       tap(event => {
         if (event instanceof HttpResponse) {
-          console.log(`[CORS] ✅ Success: ${req.method} ${modifiedUrl} -> ${event.status}`);
+          console.log(`[CORS] ✅ Success: ${req.method} ${modifiedUrl.substring(0, 60)}... -> ${event.status}`);
         }
       }),
       catchError((error: HttpErrorResponse) => {
-        console.error(`[CORS] ❌ Error: ${req.method} ${modifiedUrl} -> ${error.status || 'Network Error'}`);
-
+        console.error(`[CORS] ❌ Error: ${req.method} ${modifiedUrl.substring(0, 60)}... -> ${error.status || 'Network Error'}`);
         if (error.status === 0) {
-          console.log('[CORS] 🔄 Network error detected, retrying with strict HTTPS...');
-
-          // Retry with strict HTTPS and explicit headers
-          const retryUrl = modifiedUrl.replace('http://', 'https://');
-          const retryReq = req.clone({
-            url: retryUrl,
-            setHeaders: {
-              'Accept': 'application/json',
-              'Cache-Control': 'no-cache, no-store, must-revalidate',
-              'Pragma': 'no-cache'
-            }
-          });
-
-          return next.handle(retryReq).pipe(
-            tap(response => {
-              if (response instanceof HttpResponse) {
-                console.log('[CORS] 🎉 Retry succeeded');
-              }
-            }),
-            catchError(retryError => {
-              console.error('[CORS] 💥 All retries failed');
-              return throwError(() => retryError);
-            })
-          );
+          console.error('[CORS] Network error (likely CORS preflight issue or network unreachable)');
         }
-
         return throwError(() => error);
       })
     );

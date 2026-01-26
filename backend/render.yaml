@@ -4,7 +4,7 @@ services:
     env: python
     region: oregon  # Choisissez votre région (oregon, frankfurt, singapore, etc.)
     buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT --proxy-headers
+    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: DATABASE_URL
         sync: false
@@ -17,9 +17,8 @@ services:
         value: 3.11.0
       - key: ENVIRONMENT
         value: production
-      - key: RENDER
-        value: "true"
       - key: CORS_ORIGINS
-        value: https://localhost:4200,http://localhost:4200,https://collecte-taxe.onrender.com,http://collecte-taxe.onrender.com
+        value: https://votre-frontend.onrender.com
         # Modifiez avec vos URLs frontend réelles (séparées par des virgules)
     healthCheckPath: /health
+
