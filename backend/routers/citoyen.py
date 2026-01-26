@@ -12,6 +12,7 @@ from database.database import get_db
 from database.models import Contribuable, AffectationTaxe, Taxe, OtpCitoyen
 from auth.security import verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_password_hash
 from auth.schemas import OtpRequest, OtpVerify
+from pydantic import BaseModel, EmailStr
 import random
 import os
 import smtplib
@@ -23,9 +24,19 @@ logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/api/citoyen", tags=["citoyen"])
 
 
+# Schémas pour les requêtes de login
+class LoginEmailRequest(BaseModel):
+    email: EmailStr
+    password: str
+
+class LoginPhoneRequest(BaseModel):
+    telephone: str
+    password: str
+
+
 @router.post("/login")
 def login_citoyen(
-    form_data: OAuth2PasswordRequestForm = Depends(),
+    login_data: LoginPhoneRequest,
     db: Session = Depends(get_db)
 ):
     """
@@ -33,7 +44,7 @@ def login_citoyen(
     """
     # Chercher le contribuable par téléphone
     contribuable = db.query(Contribuable).filter(
-        Contribuable.telephone == form_data.username
+        Contribuable.telephone == login_data.telephone
     ).first()
     
     if not contribuable:
@@ -51,7 +62,7 @@ def login_citoyen(
             headers={"WWW-Authenticate": "Bearer"},
         )
     
-    if not verify_password(form_data.password, contribuable.mot_de_passe_hash):
+    if not verify_password(login_data.password, contribuable.mot_de_passe_hash):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Téléphone ou mot de passe incorrect",
@@ -68,6 +79,69 @@ def login_citoyen(
     access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
         data={"sub": str(contribuable.id), "telephone": contribuable.telephone, "role": "citoyen"},
+        expires_delta=access_token_expires
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "contribuable": {
+            "id": contribuable.id,
+            "nom": contribuable.nom,
+            "prenom": contribuable.prenom,
+            "telephone": contribuable.telephone,
+            "email": contribuable.email,
+            "adresse": contribuable.adresse,
+            "matricule": contribuable.matricule
+        }
+    }
+
+
+@router.post("/login-email")
+def login_citoyen_email(
+    login_data: LoginEmailRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Authentification d'un citoyen par email et mot de passe
+    """
+    # Chercher le contribuable par email
+    contribuable = db.query(Contribuable).filter(
+        Contribuable.email == login_data.email
+    ).first()
+    
+    if not contribuable:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou mot de passe incorrect",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Vérifier le mot de passe
+    if not contribuable.mot_de_passe_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Compte non configuré. Veuillez contacter la mairie pour activer votre compte.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not verify_password(login_data.password, contribuable.mot_de_passe_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou mot de passe incorrect",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not contribuable.actif:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte désactivé"
+        )
+    
+    # Créer le token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(contribuable.id), "email": contribuable.email, "role": "citoyen"},
         expires_delta=access_token_expires
     )
     
@@ -274,4 +348,3 @@ def get_taxes_contribuable(
         })
     
     return result
-
