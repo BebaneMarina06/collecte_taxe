@@ -43,7 +43,7 @@ class CollecteBulkCreate(BaseModel):
 @router.get("/", response_model=List[InfoCollecteResponse])
 def get_collectes(
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(100, ge=1, le=50000),  # Augmenté pour charger toutes les collectes
     collecteur_id: Optional[int] = None,
     contribuable_id: Optional[int] = None,
     taxe_id: Optional[int] = None,

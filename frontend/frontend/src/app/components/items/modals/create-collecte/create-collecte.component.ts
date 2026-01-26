@@ -131,10 +131,14 @@ export class CreateCollecteComponent implements OnInit {
         adresse: contribuable.adresse,
         collecteur_id: contribuable.collecteur_id
       };
-      
+
+      console.log('📋 Contribuable sélectionné:', this.selectedContribuable);
+      console.log('🔍 Email initial:', this.selectedContribuable.email || 'Non disponible');
+      console.log('🔍 Adresse initiale:', this.selectedContribuable.adresse || 'Non disponible');
+
       // Auto-remplir le collecteur
       this.formData.collecteur_id = contribuable.collecteur_id;
-      
+
       // Charger les taxes actives du contribuable
       this.loadTaxesForContribuable(this.formData.contribuable_id);
     }
@@ -158,6 +162,10 @@ export class CreateCollecteComponent implements OnInit {
           if (this.selectedContribuable) {
             this.selectedContribuable.email = response.contribuable_email;
             this.selectedContribuable.adresse = response.contribuable_adresse;
+
+            console.log('✅ Infos complètes mises à jour');
+            console.log('📧 Email:', response.contribuable_email || 'Non disponible');
+            console.log('📍 Adresse:', response.contribuable_adresse || 'Non disponible');
           }
 
           console.log('📋', this.taxesDisponibles.length, 'taxes disponibles');

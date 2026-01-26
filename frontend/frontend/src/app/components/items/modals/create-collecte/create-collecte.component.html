@@ -41,7 +41,7 @@
     </div>
 
     <!-- Info Contribuable Card -->
-    @if (selectedContribuable && !loadingTaxes) {
+    @if (selectedContribuable) {
       <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
         <h3 class="text-lg font-semibold text-main mb-3">Informations du contribuable</h3>
         <div class="grid grid-cols-2 gap-3 text-sm">
@@ -59,14 +59,20 @@
           </div>
           <div>
             <p class="text-gray-600">Email</p>
-            <p class="font-medium">{{ selectedContribuable.email || '-' }}</p>
+            @if (loadingTaxes && !selectedContribuable.email) {
+              <p class="text-gray-400 text-xs italic">Chargement...</p>
+            } @else {
+              <p class="font-medium">{{ selectedContribuable.email || '-' }}</p>
+            }
           </div>
-          @if (selectedContribuable.adresse) {
-            <div class="col-span-2">
-              <p class="text-gray-600">Adresse</p>
-              <p class="font-medium">{{ selectedContribuable.adresse }}</p>
-            </div>
-          }
+          <div class="col-span-2">
+            <p class="text-gray-600">Adresse</p>
+            @if (loadingTaxes && !selectedContribuable.adresse) {
+              <p class="text-gray-400 text-xs italic">Chargement...</p>
+            } @else {
+              <p class="font-medium">{{ selectedContribuable.adresse || '-' }}</p>
+            }
+          </div>
         </div>
       </div>
     }

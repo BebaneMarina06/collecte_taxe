@@ -262,14 +262,24 @@ export class ApiService {
 
   // Collectes
   getCollectes(params?: any): Observable<any> {
-    console.log('📤 GET /api/collectes (sans slash final)');
-    
-    const httpParams = new HttpParams({ fromObject: params || {} });
-    
-    return this.http.get(`${this.apiUrl}/collectes`, {
+    console.log('📤 GET /api/collectes/ (avec slash final)');
+
+    // Filtrer les paramètres non supportés par le backend
+    const cleanParams = { ...params };
+    delete cleanParams.order_by; // Le backend trie déjà par date_collecte desc
+
+    const httpParams = new HttpParams({ fromObject: cleanParams || {} });
+
+    return this.http.get(`${this.apiUrl}/collectes/`, {
       params: httpParams,
       headers: this.getHeaders()
-    });
+    }).pipe(
+      tap((response: any) => console.log('✅ Collectes récupérées:', response?.length || 0, 'éléments')),
+      catchError((error) => {
+        console.error('❌ Erreur récupération collectes:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   getCollecte(id: number): Observable<any> {
