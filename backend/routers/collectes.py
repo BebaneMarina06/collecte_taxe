@@ -439,7 +439,7 @@ def get_etat_collecteurs(
         and_(
             func.date(InfoCollecte.date_collecte) >= date_debut,
             func.date(InfoCollecte.date_collecte) <= date_fin,
-            InfoCollecte.statut == StatutCollecteEnum.CONFIRMED
+            InfoCollecte.statut == StatutCollecteEnum.COMPLETED
         )
     )
     
@@ -494,7 +494,7 @@ def get_etat_collecteurs(
         and_(
             func.date(InfoCollecte.date_collecte) >= date_debut,
             func.date(InfoCollecte.date_collecte) <= date_fin,
-            InfoCollecte.statut == StatutCollecteEnum.CONFIRMED
+            InfoCollecte.statut == StatutCollecteEnum.COMPLETED
         )
     ).join(Contribuable, InfoCollecte.contribuable_id == Contribuable.id)
     
