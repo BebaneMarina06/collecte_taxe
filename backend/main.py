@@ -10,6 +10,7 @@ from fastapi.responses import JSONResponse
 from database.database import init_db
 from routers import (
     taxes,
+    taxations,
     contribuables,
     collecteurs,
     collectes,
@@ -75,6 +76,7 @@ app.add_middleware(
 app.include_router(auth.router)
 app.include_router(utilisateurs.router)
 app.include_router(taxes.router)
+app.include_router(taxations.router)
 app.include_router(contribuables.router)
 app.include_router(collecteurs.router)
 app.include_router(collectes.router)
