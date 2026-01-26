@@ -61,16 +61,27 @@ async def add_utf8_encoding(request: Request, call_next):
 # Configuration CORS pour permettre les requêtes depuis le front-end Angular et l'app mobile
 import os
 cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200").split(",")
+
+# Ajouter les URL Render (HTTP et HTTPS)
+render_urls = [
+    "https://collecte-taxe-frontend.onrender.com",
+    "http://collecte-taxe-frontend.onrender.com",
+    "https://collecte-taxe.onrender.com",
+    "http://collecte-taxe.onrender.com"
+]
+cors_origins.extend(render_urls)
+
 # En production, ajoutez l'URL de votre app mobile ici ou utilisez "*" pour développement
 if os.getenv("ENVIRONMENT") != "production":
     cors_origins.append("*")  # Permettre toutes les origines en développement
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
+    allow_origins=list(set(cors_origins)),  # Remove duplicates
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
+    allow_origin_regex="https?://.*\.onrender\.com",  # Pattern pour Render
 )
 
 # Inclusion des routers

@@ -6,8 +6,11 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database.database import get_db
-from database.models import InfoCollecte, Taxe, StatutCollecteEnum
+from database.models import InfoCollecte, Taxe, StatutCollecteEnum, Contribuable
 from schemas.info_collecte import InfoCollecteCreate, InfoCollecteUpdate, InfoCollecteResponse
+from schemas.type_contribuable import TypeContribuableBase
+from schemas.quartier import QuartierBase
+from schemas.collecteur import CollecteurBase
 from datetime import datetime, date
 from decimal import Decimal
 from pydantic import BaseModel, Field
@@ -33,9 +36,9 @@ class ContribuableDetailResponse(BaseModel):
     email: Optional[str] = None
     adresse: Optional[str] = None
     nom_activite: Optional[str] = None
-    type_contribuable: Optional[dict] = None
-    quartier: Optional[dict] = None
-    collecteur: Optional[dict] = None
+    type_contribuable: Optional[TypeContribuableBase] = None
+    quartier: Optional[QuartierBase] = None
+    collecteur: Optional[CollecteurBase] = None
     latitude: Optional[Decimal] = None
     longitude: Optional[Decimal] = None
     photo_url: Optional[str] = None
@@ -48,7 +51,6 @@ class ContribuableDetailResponse(BaseModel):
 def get_contribuable_details(contribuable_id: int, db: Session = Depends(get_db)):
     """Récupère les informations détaillées d'un contribuable pour auto-remplissage lors d'une collecte"""
     from sqlalchemy.orm import joinedload
-    from database.models import Contribuable
     
     contribuable = db.query(Contribuable).options(
         joinedload(Contribuable.type_contribuable),
