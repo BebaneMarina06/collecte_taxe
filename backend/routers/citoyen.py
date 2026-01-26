@@ -86,6 +86,69 @@ def login_citoyen(
     }
 
 
+@router.post("/login-email")
+def login_citoyen_email(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    """
+    Authentification d'un citoyen par email et mot de passe
+    """
+    # Chercher le contribuable par email
+    contribuable = db.query(Contribuable).filter(
+        Contribuable.email == form_data.username
+    ).first()
+    
+    if not contribuable:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou mot de passe incorrect",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    # Vérifier le mot de passe
+    if not contribuable.mot_de_passe_hash:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Compte non configuré. Veuillez contacter la mairie pour activer votre compte.",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not verify_password(form_data.password, contribuable.mot_de_passe_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Email ou mot de passe incorrect",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
+    
+    if not contribuable.actif:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Compte désactivé"
+        )
+    
+    # Créer le token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(contribuable.id), "email": contribuable.email, "role": "citoyen"},
+        expires_delta=access_token_expires
+    )
+    
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "contribuable": {
+            "id": contribuable.id,
+            "nom": contribuable.nom,
+            "prenom": contribuable.prenom,
+            "telephone": contribuable.telephone,
+            "email": contribuable.email,
+            "adresse": contribuable.adresse,
+            "matricule": contribuable.matricule
+        }
+    }
+
+
 def send_email_otp(email: str, code: str):
     """
     Envoie un OTP par email via SMTP simple.
@@ -274,4 +337,3 @@ def get_taxes_contribuable(
         })
     
     return result
-
