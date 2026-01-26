@@ -497,3 +497,54 @@ def download_qr_code(
         }
     )
 
+
+@router.get("/{contribuable_id}/taxations", response_model=List[dict])
+def get_contribuable_taxations(
+    contribuable_id: int,
+    actif: Optional[bool] = None,
+    db: Session = Depends(get_db)
+):
+    """Récupère toutes les taxations (taxes assignées) d'un contribuable"""
+    from sqlalchemy.orm import joinedload
+    from database.models import AffectationTaxe, Taxe
+    
+    # Vérifier que le contribuable existe
+    contribuable = db.query(Contribuable).filter(
+        Contribuable.id == contribuable_id
+    ).first()
+    
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    # Récupérer les affectations de taxes
+    query = db.query(AffectationTaxe).options(
+        joinedload(AffectationTaxe.taxe)
+    ).filter(AffectationTaxe.contribuable_id == contribuable_id)
+    
+    if actif is not None:
+        query = query.filter(AffectationTaxe.actif == actif)
+    
+    affectations = query.all()
+    
+    # Construire la réponse
+    taxations = []
+    for affectation in affectations:
+        taxe = affectation.taxe
+        taxations.append({
+            "id": affectation.id,
+            "affectation_id": affectation.id,
+            "taxe_id": taxe.id,
+            "taxe_nom": taxe.nom,
+            "taxe_code": taxe.code,
+            "taxe_description": taxe.description,
+            "montant": float(taxe.montant),
+            "montant_custom": float(affectation.montant_custom) if affectation.montant_custom else None,
+            "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else taxe.periodicite,
+            "date_debut": affectation.date_debut.isoformat() if affectation.date_debut else None,
+            "date_fin": affectation.date_fin.isoformat() if affectation.date_fin else None,
+            "actif": affectation.actif,
+            "created_at": affectation.created_at.isoformat() if affectation.created_at else None,
+            "updated_at": affectation.updated_at.isoformat() if affectation.updated_at else None
+        })
+    
+    return taxations
