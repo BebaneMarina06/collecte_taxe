@@ -17,7 +17,7 @@ from datetime import datetime
 from auth.security import get_current_active_user
 
 router = APIRouter(
-    prefix="/api/demandes-citoyens",
+    prefix="/api/demandes",  # ← CHANGÉ ICI (enlevé le -citoyens)
     tags=["demandes-citoyens"],
     dependencies=[Depends(get_current_active_user)],
 )
@@ -183,4 +183,3 @@ def delete_demande(
     db.delete(db_demande)
     db.commit()
     return None
-
