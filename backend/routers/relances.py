@@ -25,6 +25,7 @@ VENTIS_DEFAULT_SENDER = os.getenv("VENTIS_MESSAGING_SENDER", "VENTIS")
 
 
 @router.get("/", response_model=RelanceListResponse)
+@router.get("", response_model=RelanceListResponse)
 def get_relances(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),

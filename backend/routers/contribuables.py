@@ -63,6 +63,7 @@ def distance_to_quartier(db: Session, quartier_id: Optional[int], geom_point) ->
 
 
 @router.get("/", response_model=List[ContribuableResponse])
+@router.get("", response_model=List[ContribuableResponse])
 def get_contribuables(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=50000),  # Augmenté pour permettre de charger tous les contribuables
