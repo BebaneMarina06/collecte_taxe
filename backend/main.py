@@ -58,53 +58,21 @@ async def add_utf8_encoding(request: Request, call_next):
             )
     return response
 
-# Middleware pour ajouter les headers de sécurité et gérer les préflights CORS
-@app.middleware("http")
-async def handle_preflight(request: Request, call_next):
-    # Ajouter les headers de réponse pour les requêtes CORS preflight (OPTIONS)
-    if request.method == "OPTIONS":
-        return Response(
-            status_code=200,
-            headers={
-                "Access-Control-Allow-Origin": request.headers.get("origin", "*"),
-                "Access-Control-Allow-Methods": "GET, POST, PUT, PATCH, DELETE, OPTIONS",
-                "Access-Control-Allow-Headers": request.headers.get("access-control-request-headers", "*"),
-                "Access-Control-Max-Age": "3600",
-                "Access-Control-Allow-Credentials": "true"
-            }
-        )
-    response = await call_next(request)
-    return response
-
-# Configuration CORS pour permettre les requêtes depuis le front-end Angular et l'app mobile
+# Configuration CORS pour permettre les requêtes depuis tous les clients
 import os
-import re
 
-# Récupérer les origines CORS depuis l'environnement ou utiliser les valeurs par défaut
-cors_origins_env = os.getenv("CORS_ORIGINS", "http://localhost:4200,http://127.0.0.1:4200,https://localhost:4200")
-cors_origins = [origin.strip() for origin in cors_origins_env.split(",") if origin.strip()]
+# Accepter TOUTES les origines (*)
+cors_origins = ["*"]
 
-# En production sur Render, ajouter l'URL de Render
-if os.getenv("ENVIRONMENT") == "production" or os.getenv("RENDER") == "true":
-    # Ajouter les domaines Render avec HTTP et HTTPS
-    cors_origins.extend([
-        "https://collecte-taxe.onrender.com",
-        "http://collecte-taxe.onrender.com"
-    ])
-
-# En développement, permettre toutes les origines
-if os.getenv("ENVIRONMENT") != "production":
-    cors_origins.append("*")
-
-# Supprimer les doublons
-cors_origins = list(set(cors_origins))
+print(f"✅ CORS Configuration: Accept all origins (*)")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"],
+    expose_headers=["*"],
     max_age=3600  # Cache preflight requests for 1 hour
 )
 

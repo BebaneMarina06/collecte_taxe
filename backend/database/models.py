@@ -304,7 +304,7 @@ class Taxe(Base):
     type_taxe = relationship("TypeTaxe", back_populates="taxes")
     service = relationship("Service", back_populates="taxes")
     affectations_taxes = relationship("AffectationTaxe", back_populates="taxe")
-    collecte_items = relationship("CollecteItem", back_populates="taxe")
+    collectes = relationship("InfoCollecte", back_populates="taxe")
 
 
 # ==================== TABLE AFFECTATION_TAXE ====================
@@ -336,9 +336,10 @@ class InfoCollecte(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     contribuable_id = Column(Integer, ForeignKey("contribuable.id"), nullable=False)
+    taxe_id = Column(Integer, ForeignKey("taxe.id"), nullable=False)
     collecteur_id = Column(Integer, ForeignKey("collecteur.id"), nullable=False)
-    montant_total = Column(Numeric(12, 2), nullable=False)  # Montant total de toutes les taxes
-    commission_total = Column(Numeric(12, 2), default=0.00)  # Commission totale
+    montant = Column(Numeric(12, 2), nullable=False)
+    commission = Column(Numeric(12, 2), default=0.00)
     type_paiement = Column(Enum(TypePaiementEnum, name='type_paiement_enum', create_type=False, values_callable=lambda x: [e.value for e in TypePaiementEnum]), nullable=False)
     statut = Column(Enum(StatutCollecteEnum, name='statut_collecte_enum', create_type=False, values_callable=lambda x: [e.value for e in StatutCollecteEnum]), default=StatutCollecteEnum.PENDING)
     reference = Column(String(50), unique=True, nullable=False, index=True)
@@ -354,27 +355,9 @@ class InfoCollecte(Base):
     
     # Relations
     contribuable = relationship("Contribuable", back_populates="collectes")
-    items_collecte = relationship("CollecteItem", back_populates="collecte", cascade="all, delete-orphan")
+    taxe = relationship("Taxe", back_populates="collectes")
     collecteur = relationship("Collecteur", back_populates="collectes")
     location = relationship("CollecteLocation", back_populates="collecte", uselist=False)
-
-
-# ==================== TABLE COLLECTE_ITEM ====================
-class CollecteItem(Base):
-    """Articles (taxes) d'une collecte - permet plusieurs taxes par collecte"""
-    __tablename__ = "collecte_item"
-    
-    id = Column(Integer, primary_key=True, index=True)
-    collecte_id = Column(Integer, ForeignKey("info_collecte.id"), nullable=False)
-    taxe_id = Column(Integer, ForeignKey("taxe.id"), nullable=False)
-    montant = Column(Numeric(12, 2), nullable=False)
-    commission = Column(Numeric(12, 2), default=0.00)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    
-    # Relations
-    collecte = relationship("InfoCollecte", back_populates="items_collecte")
-    taxe = relationship("Taxe", back_populates="collecte_items")
 
 
 # ==================== TABLE ZONE_GEOGRAPHIQUE ====================

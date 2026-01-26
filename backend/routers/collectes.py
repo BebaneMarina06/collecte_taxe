@@ -79,12 +79,12 @@ def get_collectes(
     db: Session = Depends(get_db)
 ):
     """Récupère la liste des collectes avec filtres et relations"""
-    from database.models import CollecteItem, CollecteLocation
+    from database.models import CollecteLocation
     
     query = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
         joinedload(InfoCollecte.collecteur),
-        joinedload(InfoCollecte.items_collecte),
+        joinedload(InfoCollecte.taxe),
         joinedload(InfoCollecte.location)
     )
     
@@ -121,7 +121,7 @@ def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
     collecte = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
         joinedload(InfoCollecte.collecteur),
-        joinedload(InfoCollecte.items_collecte),
+        joinedload(InfoCollecte.taxe),
         joinedload(InfoCollecte.location)
     ).filter(InfoCollecte.id == collecte_id).first()
     
@@ -132,13 +132,17 @@ def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=InfoCollecteResponse, status_code=201)
 def create_collecte(collecte: InfoCollecteCreate, db: Session = Depends(get_db)):
-    """Crée une nouvelle collecte avec plusieurs taxes"""
-    from database.models import CollecteItem
+    """Crée une nouvelle collecte"""
     
     # Vérifier que le contribuable existe
     contribuable = db.query(Contribuable).filter(Contribuable.id == collecte.contribuable_id).first()
     if not contribuable:
         raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    # Vérifier que la taxe existe
+    taxe = db.query(Taxe).filter(Taxe.id == collecte.taxe_id).first()
+    if not taxe:
+        raise HTTPException(status_code=404, detail="Taxe non trouvée")
     
     # Vérifier que le collecteur existe
     from database.models import Collecteur
@@ -146,27 +150,8 @@ def create_collecte(collecte: InfoCollecteCreate, db: Session = Depends(get_db))
     if not collecteur:
         raise HTTPException(status_code=404, detail="Collecteur non trouvé")
     
-    # Vérifier que toutes les taxes existent et calculer le montant total et commission
-    montant_total = Decimal('0')
-    commission_total = Decimal('0')
-    items_to_create = []
-    
-    for item in collecte.items:
-        taxe = db.query(Taxe).filter(Taxe.id == item.taxe_id).first()
-        if not taxe:
-            raise HTTPException(status_code=404, detail=f"Taxe avec ID {item.taxe_id} non trouvée")
-        
-        # Calculer la commission pour cet article
-        commission = item.montant * (Decimal(str(taxe.commission_pourcentage)) / Decimal('100'))
-        
-        montant_total += item.montant
-        commission_total += commission
-        
-        items_to_create.append({
-            'taxe_id': item.taxe_id,
-            'montant': item.montant,
-            'commission': commission
-        })
+    # Calculer la commission
+    commission = collecte.montant * (Decimal(str(taxe.commission_pourcentage)) / Decimal('100'))
     
     # Générer une référence unique
     reference = f"COL-{datetime.utcnow().strftime('%Y%m%d')}-{db.query(InfoCollecte).count() + 1:04d}"
@@ -174,9 +159,10 @@ def create_collecte(collecte: InfoCollecteCreate, db: Session = Depends(get_db))
     # Créer la collecte
     db_collecte = InfoCollecte(
         contribuable_id=collecte.contribuable_id,
+        taxe_id=collecte.taxe_id,
         collecteur_id=collecte.collecteur_id,
-        montant_total=montant_total,
-        commission_total=commission_total,
+        montant=collecte.montant,
+        commission=commission,
         type_paiement=collecte.type_paiement,
         billetage=collecte.billetage,
         date_collecte=collecte.date_collecte,
@@ -184,18 +170,6 @@ def create_collecte(collecte: InfoCollecteCreate, db: Session = Depends(get_db))
         statut=StatutCollecteEnum.PENDING
     )
     db.add(db_collecte)
-    db.flush()  # Flush pour obtenir l'ID sans commit
-    
-    # Créer les articles de collecte
-    for item_data in items_to_create:
-        db_item = CollecteItem(
-            collecte_id=db_collecte.id,
-            taxe_id=item_data['taxe_id'],
-            montant=item_data['montant'],
-            commission=item_data['commission']
-        )
-        db.add(db_item)
-    
     db.commit()
     db.refresh(db_collecte)
     return db_collecte
