@@ -276,19 +276,39 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/collectes/${id}`);
   }
 
-  createCollecte(collecte: InfoCollecteCreate): Observable<any> {
+  createCollecte(collecte: any): Observable<any> {
     console.log('📤 POST /api/collectes');
-    console.log('📦 Données brutes:', collecte);
-    
-    // ✅ Envoyer les données telles quelles (le backend attend type_paiement)
+    console.log('📦 Données collecte:', collecte);
+
+    // Si la collecte contient plusieurs items (taxes), utiliser le endpoint bulk
+    if (collecte.items && Array.isArray(collecte.items) && collecte.items.length > 0) {
+      console.log('📤 Utilisation endpoint BULK pour', collecte.items.length, 'taxes');
+      return this.http.post(`${this.apiUrl}/collectes/bulk`, collecte, {
+        headers: this.getHeaders()
+      }).pipe(
+        tap((response: any) => console.log('✅ Collectes créées:', response)),
+        catchError((error) => {
+          console.error('❌ Erreur création collectes:', error);
+          return throwError(() => error);
+        })
+      );
+    }
+
+    // Sinon, utiliser le endpoint simple pour une seule collecte
     return this.http.post(`${this.apiUrl}/collectes`, collecte, {
       headers: this.getHeaders()
     });
   }
 
-  // Récupérer les taxes actives d'un contribuable
+  // Récupérer les taxes actives d'un contribuable pour créer une collecte
   getContribuableTaxes(contribuableId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/collectes/contribuable/${contribuableId}/taxes`);
+    return this.http.get(`${this.apiUrl}/collectes/contribuable/${contribuableId}/taxes`).pipe(
+      tap((response: any) => console.log('[API] Taxes contribuable:', response)),
+      catchError((error) => {
+        console.error('[API] Erreur récupération taxes:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   updateCollecte(id: number, collecte: any): Observable<any> {

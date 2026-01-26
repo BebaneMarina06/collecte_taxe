@@ -142,15 +142,37 @@ export class CreateCollecteComponent implements OnInit {
 
   loadTaxesForContribuable(contribuableId: number): void {
     this.loadingTaxes = true;
+    this.error = '';
+
     this.apiService.getContribuableTaxes(contribuableId).subscribe({
-      next: (data: any) => {
-        this.taxesDisponibles = data.taxes || [];
+      next: (response: any) => {
+        console.log('✅ Taxes reçues:', response);
+
+        if (response.success && response.taxes) {
+          this.taxesDisponibles = response.taxes.map((taxe: any) => ({
+            ...taxe,
+            selected: false  // Initialiser toutes les taxes comme non sélectionnées
+          }));
+
+          // Mettre à jour les infos du contribuable avec les données complètes
+          if (this.selectedContribuable) {
+            this.selectedContribuable.email = response.contribuable_email;
+            this.selectedContribuable.adresse = response.contribuable_adresse;
+          }
+
+          console.log('📋', this.taxesDisponibles.length, 'taxes disponibles');
+        } else {
+          this.taxesDisponibles = [];
+          this.error = 'Aucune taxe active trouvée pour ce contribuable';
+        }
+
         this.loadingTaxes = false;
         this.calculateTotal();
       },
       error: (err) => {
-        console.error('Erreur chargement taxes:', err);
-        this.error = 'Erreur lors du chargement des taxes';
+        console.error('❌ Erreur chargement taxes:', err);
+        this.error = err.error?.detail || 'Erreur lors du chargement des taxes du contribuable';
+        this.taxesDisponibles = [];
         this.loadingTaxes = false;
       }
     });

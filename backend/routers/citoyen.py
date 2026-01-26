@@ -2,7 +2,7 @@
 Routes pour l'authentification et les services citoyens
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Query
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
@@ -290,9 +290,9 @@ def verify_otp(payload: OtpVerify, db: Session = Depends(get_db)):
     }
 
 
-@router.get("/taxes/{contribuable_id}", response_model=List[dict])
+@router.get("/taxes", response_model=List[dict])
 def get_taxes_contribuable(
-    contribuable_id: int,
+    contribuable_id: int = Query(..., description="ID du contribuable"),
     db: Session = Depends(get_db)
 ):
     """
@@ -352,7 +352,7 @@ def get_taxes_contribuable(
 
 @router.get("/demandes", response_model=List[dict])
 def get_demandes_citoyen(
-    contribuable_id: int,
+    contribuable_id: int = Query(..., description="ID du contribuable"),
     db: Session = Depends(get_db)
 ):
     """
@@ -383,7 +383,7 @@ def get_demandes_citoyen(
 @router.get("/demandes/{demande_id}", response_model=dict)
 def get_demande_citoyen(
     demande_id: int,
-    contribuable_id: int,
+    contribuable_id: int = Query(..., description="ID du contribuable"),
     db: Session = Depends(get_db)
 ):
     """
