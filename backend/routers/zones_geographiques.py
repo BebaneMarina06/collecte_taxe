@@ -28,6 +28,7 @@ def build_geom_from_geojson(geometry: Optional[dict]):
 
 
 @router.get("/", response_model=List[ZoneGeographiqueResponse])
+@router.get("", response_model=List[ZoneGeographiqueResponse])
 def get_zones_geographiques(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
