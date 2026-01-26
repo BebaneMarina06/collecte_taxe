@@ -15,19 +15,19 @@
         Contribuable <sup class="text-red-500">*</sup>
       </label>
       <div class="mt-2">
-        <select 
-          name="contribuable_id" 
-          id="contribuable_id" 
+        <select
+          name="contribuable_id"
+          id="contribuable_id"
           [(ngModel)]="formData.contribuable_id"
-          (change)="onContribuableChange()"
+          (ngModelChange)="onContribuableChange($event)"
           required
           [disabled]="loadingContribuables"
           class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
         >
-          <option [value]="0">Sélectionner un contribuable</option>
+          <option [ngValue]="0">Sélectionner un contribuable</option>
           @for (contribuable of contribuables; track contribuable.id) {
-            <option [value]="contribuable.id">
-              {{ contribuable.nom }} {{ contribuable.prenom || '' }} 
+            <option [ngValue]="contribuable.id">
+              {{ contribuable.nom }} {{ contribuable.prenom || '' }}
               @if (contribuable.telephone) {
                 - {{ contribuable.telephone }}
               }

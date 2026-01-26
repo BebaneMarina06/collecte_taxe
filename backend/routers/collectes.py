@@ -123,38 +123,58 @@ def get_contribuable_taxes(contribuable_id: int, db: Session = Depends(get_db)):
     if not contribuable:
         raise HTTPException(status_code=404, detail="Contribuable non trouvé")
 
+    print(f"🔍 Recherche taxes pour contribuable ID: {contribuable_id}")
+
     # Récupérer les affectations de taxes actives
+    from sqlalchemy import or_
+
     affectations = db.query(AffectationTaxe).options(
         joinedload(AffectationTaxe.taxe).joinedload(Taxe.type_taxe),
         joinedload(AffectationTaxe.taxe).joinedload(Taxe.service)
     ).filter(
         AffectationTaxe.contribuable_id == contribuable_id,
         AffectationTaxe.actif == True,
-        AffectationTaxe.date_fin.is_(None)  # Taxes sans date de fin (toujours actives)
+        # Taxes sans date de fin OU avec date de fin dans le futur
+        or_(
+            AffectationTaxe.date_fin.is_(None),
+            AffectationTaxe.date_fin > datetime.utcnow()
+        )
     ).all()
+
+    print(f"📋 Affectations trouvées: {len(affectations)}")
+    for aff in affectations:
+        print(f"   - Affectation ID {aff.id}: taxe_id={aff.taxe_id}, actif={aff.actif}, date_fin={aff.date_fin}")
 
     # Formater les taxes pour le frontend
     taxes_disponibles = []
     for affectation in affectations:
         taxe = affectation.taxe
-        if taxe and taxe.actif:
-            # Calculer le montant effectif (custom ou standard)
-            montant_effectif = float(affectation.montant_custom) if affectation.montant_custom else float(taxe.montant)
+        if taxe:
+            print(f"   ✓ Taxe {taxe.id} ({taxe.nom}): actif={taxe.actif}")
+            if taxe.actif:
+                # Calculer le montant effectif (custom ou standard)
+                montant_effectif = float(affectation.montant_custom) if affectation.montant_custom else float(taxe.montant)
 
-            taxes_disponibles.append({
-                "affectation_id": affectation.id,
-                "taxe_id": taxe.id,
-                "taxe_nom": taxe.nom,
-                "taxe_code": taxe.code,
-                "montant": montant_effectif,
-                "montant_custom": float(affectation.montant_custom) if affectation.montant_custom else None,
-                "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else str(taxe.periodicite),
-                "description": taxe.description or "",
-                "commission_pourcentage": float(taxe.commission_pourcentage),
-                "type_taxe": taxe.type_taxe.nom if taxe.type_taxe else None,
-                "service": taxe.service.nom if taxe.service else None,
-                "selected": False  # Par défaut non sélectionnée (pour le frontend)
-            })
+                taxes_disponibles.append({
+                    "affectation_id": affectation.id,
+                    "taxe_id": taxe.id,
+                    "taxe_nom": taxe.nom,
+                    "taxe_code": taxe.code,
+                    "montant": montant_effectif,
+                    "montant_custom": float(affectation.montant_custom) if affectation.montant_custom else None,
+                    "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else str(taxe.periodicite),
+                    "description": taxe.description or "",
+                    "commission_pourcentage": float(taxe.commission_pourcentage),
+                    "type_taxe": taxe.type_taxe.nom if taxe.type_taxe else None,
+                    "service": taxe.service.nom if taxe.service else None,
+                    "selected": False  # Par défaut non sélectionnée (pour le frontend)
+                })
+            else:
+                print(f"   ✗ Taxe {taxe.id} ignorée (inactive)")
+        else:
+            print(f"   ✗ Affectation {affectation.id}: pas de taxe associée")
+
+    print(f"✅ Retour de {len(taxes_disponibles)} taxes disponibles")
 
     return {
         "success": True,

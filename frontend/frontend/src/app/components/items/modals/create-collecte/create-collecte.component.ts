@@ -73,11 +73,14 @@ export class CreateCollecteComponent implements OnInit {
   };
 
   ngOnInit(): void {
+    console.log('🚀 CreateCollecteComponent initialisé');
+
     // Définir la date du jour par défaut
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     this.formData.date_collecte = today.toISOString().split('T')[0];
-    
+    console.log('📅 Date par défaut:', this.formData.date_collecte);
+
     // Charger les listes
     this.loadContribuables();
     this.loadCollecteurs();
@@ -85,13 +88,19 @@ export class CreateCollecteComponent implements OnInit {
 
   loadContribuables(): void {
     this.loadingContribuables = true;
+    console.log('🔄 Chargement des contribuables...');
+
     this.apiService.getContribuables({ actif: true, limit: 1000 }).subscribe({
       next: (data: any) => {
         this.contribuables = Array.isArray(data) ? data : (data.items || []);
         this.loadingContribuables = false;
+        console.log('✅ Contribuables chargés:', this.contribuables.length, 'éléments');
+        if (this.contribuables.length > 0) {
+          console.log('📝 Premier contribuable:', this.contribuables[0]);
+        }
       },
       error: (err) => {
-        console.error('Erreur chargement contribuables:', err);
+        console.error('❌ Erreur chargement contribuables:', err);
         this.loadingContribuables = false;
       }
     });
@@ -111,8 +120,14 @@ export class CreateCollecteComponent implements OnInit {
     });
   }
 
-  onContribuableChange(): void {
-    if (!this.formData.contribuable_id) {
+  onContribuableChange(contribuableId: number): void {
+    console.log('🎯 onContribuableChange appelé avec ID:', contribuableId, 'Type:', typeof contribuableId);
+
+    // Convertir en nombre si c'est une chaîne
+    const id = Number(contribuableId);
+
+    if (!id || id === 0) {
+      console.log('❌ ID invalide ou 0, réinitialisation');
       this.selectedContribuable = undefined;
       this.taxesDisponibles = [];
       this.montantTotal = 0;
@@ -120,8 +135,14 @@ export class CreateCollecteComponent implements OnInit {
     }
 
     // Trouver les infos du contribuable
-    const contribuable = this.contribuables.find(c => c.id === this.formData.contribuable_id);
+    console.log('🔍 Recherche du contribuable avec ID:', id);
+    console.log('📚 Liste des contribuables:', this.contribuables.length, 'éléments');
+
+    const contribuable = this.contribuables.find(c => Number(c.id) === id);
+
     if (contribuable) {
+      console.log('✅ Contribuable trouvé:', contribuable);
+
       this.selectedContribuable = {
         id: contribuable.id,
         nom: contribuable.nom,
@@ -138,9 +159,14 @@ export class CreateCollecteComponent implements OnInit {
 
       // Auto-remplir le collecteur
       this.formData.collecteur_id = contribuable.collecteur_id;
+      console.log('👤 Collecteur auto-rempli:', this.formData.collecteur_id);
 
       // Charger les taxes actives du contribuable
-      this.loadTaxesForContribuable(this.formData.contribuable_id);
+      console.log('🔄 Chargement des taxes...');
+      this.loadTaxesForContribuable(id);
+    } else {
+      console.error('❌ Contribuable NON trouvé avec ID:', id);
+      console.log('📋 IDs disponibles:', this.contribuables.map(c => c.id));
     }
   }
 
