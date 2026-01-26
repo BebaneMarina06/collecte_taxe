@@ -1,5 +1,6 @@
 """
 Routes pour la gestion des demandes citoyens
+VERSION COMPLÈTE CORRIGÉE
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -14,12 +15,12 @@ from schemas.demande_citoyen import (
     StatutDemandeEnum as StatutDemandeEnumSchema
 )
 from datetime import datetime
-from auth.security import get_current_active_user
+from auth.security import get_current_user_or_citoyen
 
 router = APIRouter(
-    prefix="/api/demandes",  # ← CHANGÉ ICI (enlevé le -citoyens)
+    prefix="/api/demandes",
     tags=["demandes-citoyens"],
-    dependencies=[Depends(get_current_active_user)],
+    dependencies=[Depends(get_current_user_or_citoyen)],
 )
 
 
@@ -124,7 +125,7 @@ def create_demande(
 def update_demande(
     demande_id: int,
     demande_update: DemandeCitoyenUpdate,
-    current_user = Depends(get_current_active_user),
+    current_user = Depends(get_current_user_or_citoyen),
     db: Session = Depends(get_db)
 ):
     """Met à jour une demande citoyen (changement de statut, réponse, etc.)"""
@@ -141,11 +142,12 @@ def update_demande(
         except ValueError:
             raise HTTPException(status_code=400, detail="Statut invalide")
         
-        # Si le statut change vers "en_traitement", "complete" ou "rejetee", enregistrer la date de traitement
+        # Si le statut change vers "en_traitement", "complete" ou "rejetee"
         if update_data["statut"] in [StatutDemandeEnum.EN_TRAITEMENT, StatutDemandeEnum.COMPLETE, StatutDemandeEnum.REJETEE]:
             if not db_demande.date_traitement:
                 update_data["date_traitement"] = datetime.utcnow()
-            if not db_demande.traite_par_id:
+            # Vérifier si c'est un Utilisateur (et non un Contribuable)
+            if not db_demande.traite_par_id and isinstance(current_user, Utilisateur):
                 update_data["traite_par_id"] = current_user.id
     
     for field, value in update_data.items():
