@@ -9,7 +9,7 @@ from sqlalchemy import func
 from datetime import datetime, timedelta
 from typing import List, Optional
 from database.database import get_db
-from database.models import Contribuable, AffectationTaxe, Taxe, OtpCitoyen
+from database.models import Contribuable, AffectationTaxe, Taxe, OtpCitoyen, DemandeCitoyen, StatutDemandeEnum
 from auth.security import verify_password, create_access_token, ACCESS_TOKEN_EXPIRE_MINUTES, get_password_hash
 from auth.schemas import OtpRequest, OtpVerify
 from pydantic import BaseModel, EmailStr
@@ -348,3 +348,110 @@ def get_taxes_contribuable(
         })
     
     return result
+
+
+@router.get("/demandes", response_model=List[dict])
+def get_demandes_citoyen(
+    contribuable_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère toutes les demandes d'un citoyen
+    """
+    demandes = db.query(DemandeCitoyen).filter(
+        DemandeCitoyen.contribuable_id == contribuable_id
+    ).order_by(DemandeCitoyen.created_at.desc()).all()
+    
+    result = []
+    for demande in demandes:
+        result.append({
+            "id": demande.id,
+            "type_demande": demande.type_demande,
+            "sujet": demande.sujet,
+            "description": demande.description,
+            "statut": demande.statut.value if demande.statut else None,
+            "reponse": demande.reponse,
+            "pieces_jointes": demande.pieces_jointes,
+            "date_traitement": demande.date_traitement.isoformat() if demande.date_traitement else None,
+            "created_at": demande.created_at.isoformat() if demande.created_at else None,
+            "updated_at": demande.updated_at.isoformat() if demande.updated_at else None
+        })
+    
+    return result
+
+
+@router.get("/demandes/{demande_id}", response_model=dict)
+def get_demande_citoyen(
+    demande_id: int,
+    contribuable_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère une demande spécifique d'un citoyen
+    """
+    demande = db.query(DemandeCitoyen).filter(
+        DemandeCitoyen.id == demande_id,
+        DemandeCitoyen.contribuable_id == contribuable_id
+    ).first()
+    
+    if not demande:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demande non trouvée"
+        )
+    
+    return {
+        "id": demande.id,
+        "type_demande": demande.type_demande,
+        "sujet": demande.sujet,
+        "description": demande.description,
+        "statut": demande.statut.value if demande.statut else None,
+        "reponse": demande.reponse,
+        "pieces_jointes": demande.pieces_jointes,
+        "date_traitement": demande.date_traitement.isoformat() if demande.date_traitement else None,
+        "created_at": demande.created_at.isoformat() if demande.created_at else None,
+        "updated_at": demande.updated_at.isoformat() if demande.updated_at else None
+    }
+
+
+@router.post("/demandes", response_model=dict, status_code=201)
+def create_demande_citoyen(
+    demande: dict,
+    db: Session = Depends(get_db)
+):
+    """
+    Crée une nouvelle demande pour un citoyen
+    """
+    # Vérifier que le contribuable existe
+    contribuable = db.query(Contribuable).filter(
+        Contribuable.id == demande.get("contribuable_id")
+    ).first()
+    
+    if not contribuable:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Contribuable non trouvé"
+        )
+    
+    db_demande = DemandeCitoyen(
+        contribuable_id=demande.get("contribuable_id"),
+        type_demande=demande.get("type_demande"),
+        sujet=demande.get("sujet"),
+        description=demande.get("description"),
+        pieces_jointes=demande.get("pieces_jointes"),
+        statut=StatutDemandeEnum.ENVOYEE
+    )
+    
+    db.add(db_demande)
+    db.commit()
+    db.refresh(db_demande)
+    
+    return {
+        "id": db_demande.id,
+        "type_demande": db_demande.type_demande,
+        "sujet": db_demande.sujet,
+        "description": db_demande.description,
+        "statut": db_demande.statut.value if db_demande.statut else None,
+        "pieces_jointes": db_demande.pieces_jointes,
+        "created_at": db_demande.created_at.isoformat() if db_demande.created_at else None
+    }
