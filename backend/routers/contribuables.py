@@ -507,6 +507,7 @@ def get_contribuable_taxations(
     """Récupère toutes les taxations (taxes assignées) d'un contribuable"""
     from sqlalchemy.orm import joinedload
     from database.models import AffectationTaxe, Taxe
+    from datetime import datetime
     
     # Vérifier que le contribuable existe
     contribuable = db.query(Contribuable).filter(
@@ -526,22 +527,39 @@ def get_contribuable_taxations(
     
     affectations = query.all()
     
-    # Construire la réponse
+    # Construire la réponse avec les champs attendus
     taxations = []
     for affectation in affectations:
         taxe = affectation.taxe
+        
+        # Calculer les montants
+        montant_attendu = float(affectation.montant_custom) if affectation.montant_custom else float(taxe.montant)
+        montant_paye = 0.0  # À calculer à partir des collectes si nécessaire
+        montant_restant = montant_attendu - montant_paye
+        
+        # Déterminer le statut
+        if montant_paye == 0:
+            statut = "non_paye"
+        elif montant_paye < montant_attendu:
+            statut = "partiellement_paye"
+        else:
+            statut = "paye"
+        
         taxations.append({
             "id": affectation.id,
-            "affectation_id": affectation.id,
             "taxe_id": taxe.id,
             "taxe_nom": taxe.nom,
             "taxe_code": taxe.code,
             "taxe_description": taxe.description,
+            "periode_debut": affectation.date_debut.isoformat() if affectation.date_debut else None,
+            "periode_fin": affectation.date_fin.isoformat() if affectation.date_fin else None,
+            "montant_attendu": montant_attendu,
+            "montant_paye": montant_paye,
+            "montant_restant": montant_restant,
             "montant": float(taxe.montant),
             "montant_custom": float(affectation.montant_custom) if affectation.montant_custom else None,
             "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else taxe.periodicite,
-            "date_debut": affectation.date_debut.isoformat() if affectation.date_debut else None,
-            "date_fin": affectation.date_fin.isoformat() if affectation.date_fin else None,
+            "statut": statut,
             "actif": affectation.actif,
             "created_at": affectation.created_at.isoformat() if affectation.created_at else None,
             "updated_at": affectation.updated_at.isoformat() if affectation.updated_at else None
