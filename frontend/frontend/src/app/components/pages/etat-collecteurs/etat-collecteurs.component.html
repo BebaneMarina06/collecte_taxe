@@ -1,0 +1,118 @@
+<div class="etat-collecteurs-container">
+  <div class="header">
+    <h1>État des Collecteurs</h1>
+    <p class="subtitle">Suivi des montants collectés par jour</p>
+  </div>
+
+  <!-- Messages d'erreur -->
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <!-- Section Filtres -->
+  <div class="filters-section">
+    <div class="filters-header">
+      <app-contener>
+        <div class="mb-6">
+          <h1 class="text-2xl font-bold text-gray-900">État des Collecteurs</h1>
+          <p class="text-gray-600 mt-1">Suivi des montants collectés par jour</p>
+        </div>
+
+        <div *ngIf="error" class="px-4">
+          <div class="text-sm text-red-600">{{ error }}</div>
+        </div>
+
+        <div class="flex justify-between py-3 bg-background rounded-lg my-6 px-4">
+          <div class="grid grid-cols-1 gap-2">
+            <div *ngIf="dateSpecifique">
+              <input type="date" [(ngModel)]="dateSpecifique" class="rounded-md bg-white py-1.5 pl-3 pr-3 text-base text-gray-900 outline outline-1 outline-gray-300" />
+            </div>
+            <div *ngIf="!dateSpecifique" class="flex gap-2">
+              <input type="date" [(ngModel)]="dateDebut" class="rounded-md bg-white py-1.5 pl-3 pr-3 text-sm text-gray-900 outline outline-1 outline-gray-300" />
+              <input type="date" [(ngModel)]="dateFin" class="rounded-md bg-white py-1.5 pl-3 pr-3 text-sm text-gray-900 outline outline-1 outline-gray-300" />
+            </div>
+            <div>
+              <select [(ngModel)]="collecteurId" class="rounded-md bg-white py-1.5 pl-3 pr-3 text-sm text-gray-900 outline outline-1 outline-gray-300">
+                <option value="">Tous les collecteurs</option>
+                <option *ngFor="let c of collecteurs" [value]="c.id">{{ c.nom }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="flex gap-3 items-center">
+            <button (click)="reinitialiserFiltres()" class="px-4 py-2 rounded-lg border bg-white">Réinitialiser</button>
+            <button (click)="chargerEtats()" class="inline-flex items-center gap-x-3 rounded-md bg-main px-4 py-2 text-sm font-semibold text-white">Charger</button>
+            <button (click)="exporterCSV()" class="flex gap-2 items-center px-4 bg-white py-2 rounded-lg border">Exporter</button>
+          </div>
+        </div>
+
+        <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="min-w-full text-sm text-gray-600">
+              <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+                <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+                  <th class="px-6 py-4 text-left">Collecteur</th>
+                  <th class="px-6 py-4 text-left">Date</th>
+                  <th class="px-6 py-4 text-right">Cash</th>
+                  <th class="px-6 py-4 text-right">Numérique</th>
+                  <th class="px-6 py-4 text-right">Total</th>
+                  <th class="px-6 py-4 text-left">Contribuables</th>
+                  <th class="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="bg-white divide-y divide-gray-100">
+                <tr *ngIf="loading">
+                  <td colspan="7" class="px-6 py-12 text-center text-gray-500">Chargement...</td>
+                </tr>
+                <tr *ngIf="!loading && paginerDonnees().length === 0">
+                  <td colspan="7" class="px-6 py-12 text-center text-gray-500">Aucune donnée à afficher</td>
+                </tr>
+                <ng-container *ngFor="let etat of paginerDonnees(); let i = index; trackBy: trackByIndex">
+                  <tr class="hover:bg-slate-50 transition-colors">
+                    <td class="px-6 py-4">
+                      <p class="font-semibold text-gray-900">{{ etat.nom_collecteur }}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                      <p class="text-sm text-gray-700">{{ formatDate(etat.date) }}</p>
+                    </td>
+                    <td class="px-6 py-4 text-right font-medium text-red-600">{{ formatMontant(etat.montant_cash) }}</td>
+                    <td class="px-6 py-4 text-right font-medium text-teal-600">{{ formatMontant(etat.montant_numerique) }}</td>
+                    <td class="px-6 py-4 text-right font-semibold text-indigo-600">{{ formatMontant(etat.montant_total) }}</td>
+                    <td class="px-6 py-4">
+                      <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold">{{ etat.nombre_contribuables }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                      <button (click)="afficherContribuables(etat)" class="px-3 py-1.5 rounded-lg border text-xs">{{ etat.showDetails ? 'Masquer' : 'Afficher' }}</button>
+                    </td>
+                  </tr>
+
+                  <tr *ngIf="etat.showDetails">
+                    <td colspan="7" class="px-6 py-4 bg-gray-50">
+                      <div class="grid grid-cols-1 gap-2">
+                        <h4 class="text-sm font-semibold text-indigo-600">Contribuables collectés le {{ formatDate(etat.date) }}</h4>
+                        <ul class="grid grid-cols-1 gap-2 md:grid-cols-2">
+                          <li *ngFor="let contrib of etat.contribuables" class="flex items-center justify-between p-3 bg-white border rounded-lg">
+                            <div class="text-sm font-medium text-gray-900">{{ contrib.prenom }} {{ contrib.nom }}</div>
+                            <div class="text-sm text-indigo-600 font-semibold">{{ formatMontant(contrib.montant) }} F</div>
+                          </li>
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                </ng-container>
+
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="flex justify-between items-center mt-6">
+          <div class="text-sm text-gray-600">Total collecteurs: {{ filteredEtats.length }}</div>
+          <div class="flex items-center gap-3">
+            <button (click)="allerPage(currentPage - 1)" [disabled]="currentPage === 1" class="px-3 py-1 rounded-lg border">Précédent</button>
+            <span>Page {{ currentPage }} / {{ totalPages }}</span>
+            <button (click)="allerPage(currentPage + 1)" [disabled]="currentPage === totalPages" class="px-3 py-1 rounded-lg border">Suivant</button>
+          </div>
+        </div>
+      </app-contener>
+            <th>Montant Total</th>

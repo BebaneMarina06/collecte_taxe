@@ -378,3 +378,165 @@ def delete_collecte(collecte_id: int, db: Session = Depends(get_db)):
     db.commit()
     return None
 
+
+# ==================== ENDPOINT ÉTATS DES COLLECTEURS ====================
+
+class CollecteurEtatResponse(BaseModel):
+    """Schéma pour l'état d'un collecteur par jour"""
+    collecteur_id: int
+    nom_collecteur: str
+    date: date
+    montant_cash: Decimal
+    montant_numerique: Decimal
+    montant_total: Decimal
+    nombre_contribuables: int
+    contribuables: List[dict]  # [{id, nom, prenom, montant}]
+    
+    class Config:
+        from_attributes = True
+
+
+@router.get("/etat/par-collecteur")
+@router.get("/etat/par-collecteur/")
+def get_etat_collecteurs(
+    date_debut: Optional[date] = Query(None),
+    date_fin: Optional[date] = Query(None),
+    date_specifique: Optional[date] = Query(None),
+    collecteur_id: Optional[int] = Query(None),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère l'état des collecteurs par jour avec montants et contribuables.
+    
+    Paramètres:
+    - date_debut: Date de début (incluse)
+    - date_fin: Date de fin (incluse)
+    - date_specifique: Filtrer par un jour spécifique
+    - collecteur_id: Filtrer par collecteur
+    """
+    from sqlalchemy import func, and_
+    from database.models import Collecteur, TypePaiementEnum
+    
+    print(f"[collectes.get_etat_collecteurs] date_debut={date_debut} date_fin={date_fin} date_specifique={date_specifique} collecteur_id={collecteur_id}")
+    # Déterminer les dates
+    if date_specifique:
+        date_debut = date_specifique
+        date_fin = date_specifique
+    elif not date_debut:
+        # Par défaut: aujourd'hui
+        date_debut = datetime.now().date()
+        date_fin = date_debut
+    elif not date_fin:
+        date_fin = date_debut
+    
+    # Récupérer les collectes de la période
+    query = db.query(
+        InfoCollecte.collecteur_id,
+        func.date(InfoCollecte.date_collecte).label('date'),
+        InfoCollecte.type_paiement,
+        func.sum(InfoCollecte.montant).label('total_montant')
+    ).filter(
+        and_(
+            func.date(InfoCollecte.date_collecte) >= date_debut,
+            func.date(InfoCollecte.date_collecte) <= date_fin,
+            InfoCollecte.statut == StatutCollecteEnum.CONFIRMED
+        )
+    )
+    
+    if collecteur_id:
+        query = query.filter(InfoCollecte.collecteur_id == collecteur_id)
+    
+    collectes = query.group_by(
+        InfoCollecte.collecteur_id,
+        'date',
+        InfoCollecte.type_paiement
+    ).all()
+    
+    # Organiser les données par collecteur et date
+    etats = {}
+    for collecteur_id_val, date_val, type_paiement, montant in collectes:
+        key = f"{collecteur_id_val}_{date_val}"
+        
+        if key not in etats:
+            # Récupérer le nom du collecteur
+            collecteur = db.query(Collecteur).filter(
+                Collecteur.id == collecteur_id_val
+            ).first()
+            
+            etats[key] = {
+                'collecteur_id': collecteur_id_val,
+                'nom_collecteur': collecteur.nom if collecteur else 'Inconnu',
+                'date': date_val,
+                'montant_cash': Decimal('0.00'),
+                'montant_numerique': Decimal('0.00'),
+                'montant_total': Decimal('0.00'),
+                'contribuables': {}  # Dictionnaire pour éviter les doublons
+            }
+        
+        # Ajouter le montant selon le type de paiement
+        montant_dec = Decimal(str(montant)) if montant else Decimal('0.00')
+        if type_paiement == 'especes':
+            etats[key]['montant_cash'] += montant_dec
+        else:  # mobile_money, carte, etc.
+            etats[key]['montant_numerique'] += montant_dec
+        
+        etats[key]['montant_total'] += montant_dec
+    
+    # Récupérer les contribuables pour chaque collecte
+    collectes_details = db.query(
+        InfoCollecte.collecteur_id,
+        func.date(InfoCollecte.date_collecte).label('date'),
+        Contribuable.id.label('contribuable_id'),
+        Contribuable.nom,
+        Contribuable.prenom,
+        func.sum(InfoCollecte.montant).label('montant_collecte')
+    ).filter(
+        and_(
+            func.date(InfoCollecte.date_collecte) >= date_debut,
+            func.date(InfoCollecte.date_collecte) <= date_fin,
+            InfoCollecte.statut == StatutCollecteEnum.CONFIRMED
+        )
+    ).join(Contribuable, InfoCollecte.contribuable_id == Contribuable.id)
+    
+    if collecteur_id:
+        collectes_details = collectes_details.filter(InfoCollecte.collecteur_id == collecteur_id)
+    
+    collectes_details = collectes_details.group_by(
+        InfoCollecte.collecteur_id,
+        'date',
+        Contribuable.id,
+        Contribuable.nom,
+        Contribuable.prenom
+    ).all()
+    
+    # Ajouter les contribuables à chaque état
+    for collecteur_id_val, date_val, contrib_id, nom, prenom, montant in collectes_details:
+        key = f"{collecteur_id_val}_{date_val}"
+        if key in etats:
+            if contrib_id not in etats[key]['contribuables']:
+                etats[key]['contribuables'][contrib_id] = {
+                    'id': contrib_id,
+                    'nom': nom,
+                    'prenom': prenom,
+                    'montant': float(montant) if montant else 0.0
+                }
+    
+    # Convertir le dictionnaire de contribuables en liste
+    result = []
+    for etat_data in etats.values():
+        contribuables_list = list(etat_data['contribuables'].values())
+        result.append({
+            'collecteur_id': etat_data['collecteur_id'],
+            'nom_collecteur': etat_data['nom_collecteur'],
+            'date': etat_data['date'],
+            'montant_cash': etat_data['montant_cash'],
+            'montant_numerique': etat_data['montant_numerique'],
+            'montant_total': etat_data['montant_total'],
+            'nombre_contribuables': len(contribuables_list),
+            'contribuables': contribuables_list
+        })
+    
+    # Trier par date décroissante puis par nom du collecteur
+    result.sort(key=lambda x: (x['date'], x['nom_collecteur']), reverse=True)
+    
+    return result

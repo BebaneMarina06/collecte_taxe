@@ -96,6 +96,13 @@ export const routes: Routes = [
         loadComponent: () => import('./components/pages/demandes-citoyens/demandes-citoyens.component').then(m => m.DemandesCitoyensComponent),
         title: 'Demandes Citoyens'
       },
+        {
+          path: 'etat-collecteurs',
+          loadComponent: () => import('./components/pages/etat-collecteurs/etat-collecteurs.component').then(m => m.EtatCollecteursComponent),
+          title: 'État des Collecteurs',
+          canActivate: [RoleGuard],
+          data: { roles: ['admin', 'agent_back_office'] }
+        },
       {
         path: 'travaux',
         loadComponent: () => import('./components/pages/travaux/travaux.component').then(m => m.TravauxComponent),

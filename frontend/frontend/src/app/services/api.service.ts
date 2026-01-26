@@ -210,6 +210,13 @@ export class ApiService {
     return this.http.get(`${this.apiUrl}/collecteurs/${id}`);
   }
 
+  getEtatCollecteurs(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/collectes/etat/par-collecteur`,
+      httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+
   // Appareils collecteurs
   getCollecteurDevices(collecteurId: number, authorizedOnly?: boolean): Observable<any> {
     const params: any = {};

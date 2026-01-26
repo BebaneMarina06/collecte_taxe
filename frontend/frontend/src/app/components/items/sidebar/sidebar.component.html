@@ -80,6 +80,11 @@
               </a>
               </li>
               <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
+              <a routerLink="/etat-collecteurs" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+                  État des collecteurs
+                </a>
+              </li>
+              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
               <a routerLink="/commissions" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
                 Fichiers commissions
               </a>
@@ -97,12 +102,8 @@
               <a routerLink="/taxes" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
                   Gestion des taxes
                 </a>
-              </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/taxations" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
-                  Gestion des taxations
-                </a>
-              </li>
+            </li>
+
             </ul>
           </details>
         </li>
@@ -250,6 +251,16 @@
                   <path d="M2.25 18a.75.75 0 000 1.5c5.4 0 10.63.722 15.6 2.075 1.19.324 2.4-.558 2.4-1.82V18.75a.75.75 0 00-.75-.75H2.25z" />
                 </svg>
                 Collectes & historiques
+              </a>
+            </li>
+            <li>
+              <a routerLink="/etat-collecteurs" 
+                 routerLinkActive="bg-blue-50 text-blue-600"
+                 class="group flex gap-x-3 rounded-md p-2 text-sm leading-6 font-semibold text-gray-700 hover:text-blue-600 hover:bg-gray-50 transition-colors">
+                <svg class="h-6 w-6 shrink-0" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 3h18v2H3V3zm0 5h18v2H3V8zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+                </svg>
+                État des collecteurs
               </a>
             </li>
             <li>

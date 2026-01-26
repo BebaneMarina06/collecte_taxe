@@ -392,12 +392,14 @@ def get_historique_relances_contribuable(
 
 
 @router.get("/statistiques", response_model=dict)
+@router.get("/statistiques/", response_model=dict)
 def get_statistiques_relances(
     date_debut: Optional[str] = Query(None, description="Date de début pour les statistiques (format: YYYY-MM-DD)"),
     date_fin: Optional[str] = Query(None, description="Date de fin pour les statistiques (format: YYYY-MM-DD)"),
     db: Session = Depends(get_db)
 ):
     """Récupère les statistiques sur les relances"""
+    print(f"[relances.get_statistiques_relances] date_debut={date_debut} date_fin={date_fin}")
     query = db.query(Relance)
     
     # Convertir les chaînes en dates si fournies
