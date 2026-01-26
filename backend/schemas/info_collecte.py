@@ -3,7 +3,7 @@ Schémas Pydantic pour les collectes
 """
 
 from pydantic import BaseModel, Field, field_validator
-from typing import Optional
+from typing import Optional, List
 from datetime import datetime
 from decimal import Decimal
 from schemas.contribuable import ContribuableBase
@@ -11,11 +11,33 @@ from schemas.taxe import TaxeBase
 from schemas.collecteur import CollecteurBase
 
 
+# ==================== SCHÉMAS POUR ARTICLES DE COLLECTE ====================
+class CollecteItemBase(BaseModel):
+    """Article (taxe) d'une collecte"""
+    taxe_id: int
+    montant: Decimal = Field(..., ge=0, description="Montant collecté pour cette taxe")
+
+
+class CollecteItemCreate(CollecteItemBase):
+    pass
+
+
+class CollecteItemResponse(CollecteItemBase):
+    id: int
+    collecte_id: int
+    commission: Decimal
+    created_at: datetime
+    updated_at: datetime
+    taxe: Optional[TaxeBase] = None
+
+    class Config:
+        from_attributes = True
+
+
+# ==================== SCHÉMAS POUR COLLECTE ====================
 class InfoCollecteBase(BaseModel):
     contribuable_id: int
-    taxe_id: int
     collecteur_id: int
-    montant: Decimal = Field(..., ge=0)
     type_paiement: str  # "especes", "mobile_money", "carte"
     billetage: Optional[str] = None  # JSON string
     date_collecte: datetime = Field(default_factory=datetime.utcnow)
@@ -54,7 +76,8 @@ class InfoCollecteBase(BaseModel):
 
 
 class InfoCollecteCreate(InfoCollecteBase):
-    pass
+    """Créer une collecte avec plusieurs taxes"""
+    items: List[CollecteItemCreate] = Field(..., min_items=1, description="Liste des taxes à collecter")
 
 
 class InfoCollecteUpdate(BaseModel):
@@ -79,7 +102,8 @@ class LocationInfo(BaseModel):
 
 class InfoCollecteResponse(InfoCollecteBase):
     id: int
-    commission: Decimal
+    montant_total: Decimal
+    commission_total: Decimal
     statut: str
     reference: str
     date_cloture: Optional[datetime] = None
@@ -90,7 +114,7 @@ class InfoCollecteResponse(InfoCollecteBase):
     created_at: datetime
     updated_at: datetime
     contribuable: Optional[ContribuableBase] = None
-    taxe: Optional[TaxeBase] = None
+    items_collecte: List[CollecteItemResponse] = []
     collecteur: Optional[CollecteurBase] = None
     location: Optional[LocationInfo] = None
 

@@ -1,333 +1,194 @@
 <div class="w-full max-w-full modal-content-wrapper">
-  <div class="flex items-center justify-between mb-6">
-    <div>
-      <h2 class="text-2xl text-main font-medium">Ajouter une collecte</h2>
-      <p class="text-gray-600">Saisissez les informations de la collecte</p>
-    </div>
-    <!-- Icône principal -->
-    <svg class="w-12 h-12 text-main opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-    </svg>
-  </div>
+  <h2 class="text-2xl text-main font-medium">Ajouter une collecte</h2>
+  <p>Sélectionnez un contribuable et ses taxes</p>
   
   @if (error) {
-    <div class="mt-4 p-4 bg-red-50 border border-red-200 text-red-800 rounded-lg flex items-start gap-3">
-      <svg class="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
-        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"></path>
-      </svg>
-      <span>{{ error }}</span>
+    <div class="mt-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+      {{ error }}
     </div>
   }
   
   <form class="w-full grid gap-6 mt-8" (ngSubmit)="onSubmit()">
-    <!-- Contribuable avec auto-remplissage -->
-    <div class="space-y-4">
-      <div>
-        <label for="contribuable_id" class="block text-sm font-semibold text-gray-900">
-          <div class="flex items-center gap-2 mb-2">
-            <svg class="w-5 h-5 text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-            <span>Contribuable <sup class="text-red-500">*</sup></span>
+    <!-- Contribuable Selection -->
+    <div>
+      <label for="contribuable_id" class="block text-sm/6 font-medium text-gray-900">
+        Contribuable <sup class="text-red-500">*</sup>
+      </label>
+      <div class="mt-2">
+        <select 
+          name="contribuable_id" 
+          id="contribuable_id" 
+          [(ngModel)]="formData.contribuable_id"
+          (change)="onContribuableChange()"
+          required
+          [disabled]="loadingContribuables"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        >
+          <option [value]="0">Sélectionner un contribuable</option>
+          @for (contribuable of contribuables; track contribuable.id) {
+            <option [value]="contribuable.id">
+              {{ contribuable.nom }} {{ contribuable.prenom || '' }} 
+              @if (contribuable.telephone) {
+                - {{ contribuable.telephone }}
+              }
+            </option>
+          }
+        </select>
+        @if (loadingContribuables) {
+          <p class="mt-1 text-xs text-gray-500">Chargement des contribuables...</p>
+        }
+      </div>
+    </div>
+
+    <!-- Info Contribuable Card -->
+    @if (selectedContribuable && !loadingTaxes) {
+      <div class="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+        <h3 class="text-lg font-semibold text-main mb-3">Informations du contribuable</h3>
+        <div class="grid grid-cols-2 gap-3 text-sm">
+          <div>
+            <p class="text-gray-600">Nom</p>
+            <p class="font-medium">{{ selectedContribuable.nom }}</p>
           </div>
+          <div>
+            <p class="text-gray-600">Prénom</p>
+            <p class="font-medium">{{ selectedContribuable.prenom || '-' }}</p>
+          </div>
+          <div>
+            <p class="text-gray-600">Téléphone</p>
+            <p class="font-medium">{{ selectedContribuable.telephone }}</p>
+          </div>
+          <div>
+            <p class="text-gray-600">Email</p>
+            <p class="font-medium">{{ selectedContribuable.email || '-' }}</p>
+          </div>
+          @if (selectedContribuable.adresse) {
+            <div class="col-span-2">
+              <p class="text-gray-600">Adresse</p>
+              <p class="font-medium">{{ selectedContribuable.adresse }}</p>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Taxes Disponibles -->
+    @if (selectedContribuable) {
+      <div>
+        <label class="block text-sm/6 font-medium text-gray-900 mb-3">
+          Taxes actives <sup class="text-red-500">*</sup>
+        </label>
+        
+        @if (loadingTaxes) {
+          <p class="text-center py-4 text-gray-500">Chargement des taxes...</p>
+        } @else if (taxesDisponibles.length === 0) {
+          <p class="text-center py-4 text-gray-500">Aucune taxe active pour ce contribuable</p>
+        } @else {
+          <div class="space-y-2 border border-gray-200 rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto">
+            @for (taxe of taxesDisponibles; track taxe.affectation_id) {
+              <div class="flex items-center p-2 hover:bg-gray-100 rounded">
+                <input 
+                  type="checkbox" 
+                  [id]="'taxe_' + taxe.affectation_id"
+                  [(ngModel)]="taxe.selected"
+                  [name]="'taxe_' + taxe.affectation_id"
+                  (change)="onTaxeSelectionChange()"
+                  class="rounded border-gray-300"
+                />
+                <label [for]="'taxe_' + taxe.affectation_id" class="ml-3 flex-1 cursor-pointer">
+                  <div class="flex justify-between items-start">
+                    <div>
+                      <p class="font-medium text-gray-900">{{ taxe.taxe_nom }}</p>
+                      <p class="text-xs text-gray-500">
+                        {{ taxe.taxe_code }} • {{ taxe.periodicite }}
+                        @if (taxe.description) {
+                          - {{ taxe.description }}
+                        }
+                      </p>
+                    </div>
+                    <div class="text-right">
+                      <p class="font-semibold text-main">
+                        {{ taxe.montant_custom || taxe.montant | number:'1.2-2' }} XAF
+                      </p>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <!-- Montant Total -->
+      @if (montantTotal > 0) {
+        <div class="p-4 bg-green-50 border border-green-200 rounded-lg">
+          <div class="flex justify-between items-center">
+            <p class="text-lg font-semibold text-gray-900">Montant Total</p>
+            <p class="text-2xl font-bold text-main">{{ montantTotal | number:'1.2-2' }} XAF</p>
+          </div>
+          <p class="text-xs text-gray-600 mt-1">
+            Vous avez sélectionné {{ formData.items.length }} taxe(s)
+          </p>
+        </div>
+      }
+    }
+
+    <!-- Collecteur (auto-rempli) -->
+    @if (selectedContribuable) {
+      <div>
+        <label for="collecteur_id" class="block text-sm/6 font-medium text-gray-900">
+          Collecteur <sup class="text-red-500">*</sup>
         </label>
         <div class="mt-2">
           <select 
-            name="contribuable_id" 
-            id="contribuable_id" 
-            [(ngModel)]="formData.contribuable_id"
-            (change)="onContribuableChange($event)"
+            name="collecteur_id" 
+            id="collecteur_id" 
+            [(ngModel)]="formData.collecteur_id"
             required
-            [disabled]="loadingContribuables"
-            class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6 border border-gray-300"
+            [disabled]="loadingCollecteurs"
+            class="block w-full rounded-lg px-3 py-3 bg-blue-50 text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
           >
-            <option [value]="0">Sélectionner un contribuable</option>
-            @for (contribuable of contribuables; track contribuable.id) {
-              <option [value]="contribuable.id">
-                {{ contribuable.nom }} {{ contribuable.prenom || '' }} 
-                @if (contribuable.telephone) {
-                  - {{ contribuable.telephone }}
+            <option [value]="0">Sélectionner un collecteur</option>
+            @for (collecteur of collecteurs; track collecteur.id) {
+              <option [value]="collecteur.id">
+                {{ collecteur.nom }} {{ collecteur.prenom || '' }}
+                @if (collecteur.matricule) {
+                  ({{ collecteur.matricule }})
                 }
               </option>
             }
           </select>
-          @if (loadingContribuables) {
-            <p class="mt-1 text-xs text-gray-500">Chargement des contribuables...</p>
+          <p class="mt-1 text-xs text-gray-500">Pré-rempli selon les données du contribuable</p>
+          @if (loadingCollecteurs) {
+            <p class="mt-1 text-xs text-gray-500">Chargement des collecteurs...</p>
           }
         </div>
       </div>
+    }
 
-      <!-- Infos du contribuable sélectionné -->
-      @if (selectedContribuable) {
-        <div class="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          @if (loadingContribuableDetails) {
-            <div class="flex items-center justify-center py-4">
-              <svg class="w-5 h-5 text-blue-500 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-              </svg>
-              <span class="ml-2 text-sm text-blue-700">Chargement des informations...</span>
-            </div>
-          } @else {
-            <div class="grid grid-cols-2 gap-4">
-              <div class="space-y-2">
-                <div class="flex items-start gap-2">
-                  <svg class="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9 4a1 1 0 112 0v3.236l2.293-2.293a1 1 0 111.414 1.414L12.414 9l2.293 2.293a1 1 0 01-1.414 1.414L11 10.414V14a1 1 0 11-2 0v-3.586L6.707 12.707a1 1 0 01-1.414-1.414L7.586 10 5.293 7.707a1 1 0 011.414-1.414L9 8.586V4z" clip-rule="evenodd"></path>
-                  </svg>
-                  <div>
-                    <p class="text-xs font-medium text-blue-900">Identité</p>
-                    <p class="text-sm text-blue-800 font-semibold">{{ selectedContribuable.nom }} {{ selectedContribuable.prenom || '' }}</p>
-                  </div>
-                </div>
-
-                <div class="flex items-start gap-2">
-                  <svg class="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773c.346.689.802 1.35 1.353 1.956.551.605 1.007 1.06 1.353 1.956l1.548.773a1 1 0 01.54 1.06l-.74 4.435a1 1 0 01-.986.836H3a1 1 0 01-1-1V3z"></path>
-                  </svg>
-                  <div>
-                    <p class="text-xs font-medium text-blue-900">Téléphone</p>
-                    <p class="text-sm text-blue-800">{{ selectedContribuable.telephone }}</p>
-                  </div>
-                </div>
-              </div>
-
-              <div class="space-y-2">
-                <div class="flex items-start gap-2">
-                  <svg class="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"></path>
-                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"></path>
-                  </svg>
-                  <div>
-                    <p class="text-xs font-medium text-blue-900">Email</p>
-                    <p class="text-sm text-blue-800">{{ selectedContribuable.email || 'Non renseigné' }}</p>
-                  </div>
-                </div>
-
-                <div class="flex items-start gap-2">
-                  <svg class="w-4 h-4 text-blue-600 mt-1 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"></path>
-                  </svg>
-                  <div>
-                    <p class="text-xs font-medium text-blue-900">Adresse</p>
-                    <p class="text-sm text-blue-800">{{ selectedContribuable.adresse || 'Non renseignée' }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            @if (selectedContribuable.type_contribuable) {
-              <div class="mt-3 pt-3 border-t border-blue-200 flex gap-4">
-                <div>
-                  <p class="text-xs font-medium text-blue-900">Type</p>
-                  <p class="text-sm text-blue-800">{{ selectedContribuable.type_contribuable.nom || selectedContribuable.type_contribuable }}</p>
-                </div>
-                @if (selectedContribuable.quartier) {
-                  <div>
-                    <p class="text-xs font-medium text-blue-900">Quartier</p>
-                    <p class="text-sm text-blue-800">{{ selectedContribuable.quartier.nom || selectedContribuable.quartier }}</p>
-                  </div>
-                }
-              </div>
-            }
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Taxe -->
+    <!-- Type de Paiement -->
     <div>
-      <label for="taxe_id" class="block text-sm font-semibold text-gray-900">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-5 h-5 text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span>Taxe <sup class="text-red-500">*</sup></span>
-        </div>
+      <label for="type_paiement" class="block text-sm/6 font-medium text-gray-900">
+        Type de paiement <sup class="text-red-500">*</sup>
       </label>
       <div class="mt-2">
         <select 
-          name="taxe_id" 
-          id="taxe_id" 
-          [(ngModel)]="formData.taxe_id"
+          name="type_paiement" 
+          id="type_paiement" 
+          [(ngModel)]="formData.type_paiement"
           required
-          [disabled]="loadingTaxes"
-          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6 border border-gray-300"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
         >
-          <option [value]="0">Sélectionner une taxe</option>
-          @for (taxe of taxes; track taxe.id) {
-            <option [value]="taxe.id">
-              {{ taxe.nom }} 
-              @if (taxe.code) {
-                ({{ taxe.code }})
-              }
-              - {{ taxe.montant }} XAF
-            </option>
-          }
+          <option value="especes">Espèces</option>
+          <option value="mobile_money">Mobile Money</option>
+          <option value="carte">Carte bancaire</option>
         </select>
-        @if (loadingTaxes) {
-          <p class="mt-1 text-xs text-gray-500">Chargement des taxes...</p>
-        }
       </div>
     </div>
 
-    <!-- Collecteur (auto-rempli si possible) -->
+    <!-- Date de Collecte -->
     <div>
-      <label for="collecteur_id" class="block text-sm font-semibold text-gray-900">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-5 h-5 text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-          </svg>
-          <span>Collecteur <sup class="text-red-500">*</sup></span>
-          @if (selectedContribuable?.collecteur) {
-            <span class="ml-auto text-xs bg-green-100 text-green-800 px-2 py-1 rounded">Auto-rempli</span>
-          }
-        </div>
-      </label>
-      <div class="mt-2">
-        <select 
-          name="collecteur_id" 
-          id="collecteur_id" 
-          [(ngModel)]="formData.collecteur_id"
-          required
-          [disabled]="loadingCollecteurs"
-          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6 border border-gray-300"
-        >
-          <option [value]="0">Sélectionner un collecteur</option>
-          @for (collecteur of collecteurs; track collecteur.id) {
-            <option [value]="collecteur.id">
-              {{ collecteur.nom }} {{ collecteur.prenom || '' }}
-              @if (collecteur.matricule) {
-                ({{ collecteur.matricule }})
-              }
-            </option>
-          }
-        </select>
-        @if (loadingCollecteurs) {
-          <p class="mt-1 text-xs text-gray-500">Chargement des collecteurs...</p>
-        }
-      </div>
-    </div>
-
-    <!-- Montant -->
-    <div>
-      <label for="montant" class="block text-sm font-semibold text-gray-900">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-5 h-5 text-main" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M8.16 5a.5.5 0 100 1H12v2H8.5a1.5 1.5 0 000 3h1.34l-.66 3a.5.5 0 10.98.2l.6-3h3.34l.6 3a.5.5 0 10.98-.2l-.66-3h2.16a.5.5 0 100-1h-2.5V6h3.5a.5.5 0 100-1h-4.84l.66-3a.5.5 0 10-.98-.2l-.6 3H8.16z"></path>
-          </svg>
-          <span>Montant (XAF) <sup class="text-red-500">*</sup></span>
-        </div>
-      </label>
-      <div class="mt-2">
-        <input 
-          type="number" 
-          name="montant" 
-          id="montant" 
-          [(ngModel)]="formData.montant"
-          required
-          min="1"
-          step="1"
-          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6 border border-gray-300" 
-          placeholder="0"
-        >
-      </div>
-    </div>
-
-    <!-- Type de paiement -->
-    <div>
-      <label for="type_paiement" class="block text-sm font-semibold text-gray-900">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-5 h-5 text-main" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a1 1 0 100-2 1 1 0 000 2z"></path>
-          </svg>
-          <span>Type de paiement <sup class="text-red-500">*</sup></span>
-        </div>
-      </label>
-      <div class="mt-2 grid grid-cols-3 gap-3">
-        <label class="relative flex cursor-pointer items-center rounded-lg border border-gray-300 p-4 hover:bg-gray-50">
-          <input 
-            type="radio" 
-            name="type_paiement" 
-            value="especes"
-            [(ngModel)]="formData.type_paiement"
-            class="h-4 w-4 border-gray-300 text-main"
-          >
-          <span class="ml-3 flex flex-col items-start">
-            <span class="text-sm font-medium text-gray-900">Espèces</span>
-            <svg class="w-4 h-4 text-gray-500 mt-1" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M8.16 5a.5.5 0 100 1H12v2H8.5a1.5 1.5 0 000 3h1.34l-.66 3a.5.5 0 10.98.2l.6-3h3.34l.6 3a.5.5 0 10.98-.2l-.66-3h2.16a.5.5 0 100-1h-2.5V6h3.5a.5.5 0 100-1h-4.84l.66-3a.5.5 0 10-.98-.2l-.6 3H8.16z"></path>
-            </svg>
-          </span>
-        </label>
-
-        <label class="relative flex cursor-pointer items-center rounded-lg border border-gray-300 p-4 hover:bg-gray-50">
-          <input 
-            type="radio" 
-            name="type_paiement" 
-            value="mobile_money"
-            [(ngModel)]="formData.type_paiement"
-            class="h-4 w-4 border-gray-300 text-main"
-          >
-          <span class="ml-3 flex flex-col items-start">
-            <span class="text-sm font-medium text-gray-900">Mobile Money</span>
-            <svg class="w-4 h-4 text-gray-500 mt-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path>
-            </svg>
-          </span>
-        </label>
-
-        <label class="relative flex cursor-pointer items-center rounded-lg border border-gray-300 p-4 hover:bg-gray-50">
-          <input 
-            type="radio" 
-            name="type_paiement" 
-            value="carte"
-            [(ngModel)]="formData.type_paiement"
-            class="h-4 w-4 border-gray-300 text-main"
-          >
-          <span class="ml-3 flex flex-col items-start">
-            <span class="text-sm font-medium text-gray-900">Carte</span>
-            <svg class="w-4 h-4 text-gray-500 mt-1" fill="currentColor" viewBox="0 0 20 20">
-              <path d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a1 1 0 100-2 1 1 0 000 2z"></path>
-            </svg>
-          </span>
-        </label>
-      </div>
-    </div>
-
-    <!-- Billetage (optionnel) -->
-    <div>
-      <label for="billetage" class="block text-sm font-semibold text-gray-900">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-5 h-5 text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-          </svg>
-          <span>Billetage (optionnel)</span>
-        </div>
-      </label>
-      <div class="mt-2">
-        <textarea 
-          name="billetage" 
-          id="billetage" 
-          [(ngModel)]="formData.billetage"
-          rows="3"
-          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 placeholder:text-gray-400 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6 border border-gray-300" 
-          placeholder='Ex: {"5000": 5, "1000": 10}'
-        ></textarea>
-        <p class="mt-1 text-xs text-gray-500">
-          Format JSON optionnel pour le détail du billetage
-        </p>
-      </div>
-    </div>
-
-    <!-- Date de collecte -->
-    <div>
-      <label for="date_collecte" class="block text-sm font-semibold text-gray-900">
-        <div class="flex items-center gap-2 mb-2">
-          <svg class="w-5 h-5 text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
-          </svg>
-          <span>Date de collecte</span>
-        </div>
+      <label for="date_collecte" class="block text-sm/6 font-medium text-gray-900">
+        Date de la collecte
       </label>
       <div class="mt-2">
         <input 
@@ -335,41 +196,48 @@
           name="date_collecte" 
           id="date_collecte" 
           [(ngModel)]="formData.date_collecte"
-          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6 border border-gray-300"
-        >
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        />
       </div>
     </div>
 
-    <!-- Boutons -->
-    <div class="grid grid-cols-2 gap-3 mt-6 pt-6 border-t border-gray-200">
+    <!-- Billetage -->
+    <div>
+      <label for="billetage" class="block text-sm/6 font-medium text-gray-900">
+        Billetage (JSON)
+      </label>
+      <div class="mt-2">
+        <textarea 
+          name="billetage" 
+          id="billetage" 
+          [(ngModel)]="formData.billetage"
+          placeholder="Ex: {&quot;5000&quot;: 5, &quot;1000&quot;: 10}"
+          rows="3"
+          class="block w-full rounded-lg px-3 py-3 bg-background text-base text-gray-900 focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-main sm:text-sm/6"
+        ></textarea>
+        <p class="mt-1 text-xs text-gray-500">Optionnel - Détail du billetage en JSON</p>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex gap-3 justify-end mt-8">
       <button 
         type="button"
-        (click)="resetForm()"
-        class="rounded-lg py-3 border-main border-2 text-main font-semibold hover:bg-main/10 transition-colors flex items-center justify-center gap-2"
+        class="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 font-medium"
       >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-        </svg>
         Annuler
       </button>
       <button 
         type="submit"
-        [disabled]="loading || loadingContribuables || loadingTaxes || loadingCollecteurs || loadingContribuableDetails"
-        class="rounded-lg py-3 bg-main text-white font-semibold hover:bg-main/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+        [disabled]="loading || formData.items.length === 0"
+        class="px-4 py-2 bg-main text-white rounded-lg hover:bg-opacity-90 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       >
         @if (loading) {
-          <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-          </svg>
-          <span>Enregistrement...</span>
+          <span>Création en cours...</span>
         } @else {
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path>
-          </svg>
-          <span>Enregistrer</span>
+          <span>Créer la collecte</span>
         }
       </button>
     </div>
   </form>
 </div>
-

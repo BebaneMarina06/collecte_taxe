@@ -11,6 +11,49 @@ from schemas.quartier import QuartierBase
 from schemas.collecteur import CollecteurBase
 
 
+# ==================== SCHÉMAS POUR LES TAXES ====================
+class TaxeSimpleResponse(BaseModel):
+    """Taxe simple pour la réponse login"""
+    id: int
+    nom: str
+    code: str
+    description: Optional[str] = None
+    montant: Decimal
+    periodicite: str
+
+    class Config:
+        from_attributes = True
+
+
+class AffectationTaxeResponse(BaseModel):
+    """Affectation taxe avec détails de la taxe et du collecteur"""
+    id: int
+    taxe: TaxeSimpleResponse
+    montant_custom: Optional[Decimal] = None  # Montant personnalisé si variable
+    date_debut: datetime
+    date_fin: Optional[datetime] = None
+    actif: bool
+
+    class Config:
+        from_attributes = True
+
+
+class ContribuableLoginResponse(BaseModel):
+    """Réponse complète pour la connexion d'un contribuable"""
+    id: int
+    nom: str
+    prenom: Optional[str] = None
+    telephone: str
+    email: Optional[str] = None
+    adresse: Optional[str] = None
+    matricule: Optional[str] = None
+    type_contribuable: Optional[TypeContribuableBase] = None
+    taxes: List[AffectationTaxeResponse] = []
+
+    class Config:
+        from_attributes = True
+
+
 class ContribuableBase(BaseModel):
     nom: str = Field(..., max_length=100)
     prenom: Optional[str] = Field(None, max_length=100)

@@ -286,9 +286,9 @@ export class ApiService {
     });
   }
 
-  // Récupérer les infos détaillées d'un contribuable pour auto-remplissage
-  getContribuableDetailsForCollecte(contribuableId: number): Observable<any> {
-    return this.http.get(`${this.apiUrl}/collectes/contribuable/${contribuableId}`);
+  // Récupérer les taxes actives d'un contribuable
+  getContribuableTaxes(contribuableId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/collectes/contribuable/${contribuableId}/taxes`);
   }
 
   updateCollecte(id: number, collecte: any): Observable<any> {
@@ -875,15 +875,21 @@ export class ApiService {
   }
 }
 
-// Interceptor pour gérer les redirections CORS
+// Interceptor pour gérer les redirections CORS et forcer HTTPS
 @Injectable()
 export class CorsInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    console.log(`[CORS] Processing request: ${req.method} ${req.url}`);
+    // Forcer HTTPS pour les requêtes vers Render
+    let modifiedUrl = req.url;
+    if (req.url.includes('collecte-taxe.onrender.com') && req.url.startsWith('http://')) {
+      modifiedUrl = req.url.replace('http://', 'https://');
+      console.log(`[CORS] 🔒 Forcing HTTPS: ${req.url} -> ${modifiedUrl}`);
+    }
 
     const modifiedReq = req.clone({
+      url: modifiedUrl,
       setHeaders: {
-        'Cache-Control': 'no-cache',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache'
       }
     });
@@ -891,68 +897,35 @@ export class CorsInterceptor implements HttpInterceptor {
     return next.handle(modifiedReq).pipe(
       tap(event => {
         if (event instanceof HttpResponse) {
-          console.log(`[CORS] Réponse réussie: ${req.method} ${req.url} -> ${event.status}`);
+          console.log(`[CORS] ✅ Success: ${req.method} ${modifiedUrl} -> ${event.status}`);
         }
       }),
       catchError((error: HttpErrorResponse) => {
-        console.error(`[CORS] ❌ Error: ${req.method} ${req.url} -> ${error.status} ${error.statusText}`);
+        console.error(`[CORS] ❌ Error: ${req.method} ${modifiedUrl} -> ${error.status || 'Network Error'}`);
 
         if (error.status === 0) {
-          console.log('[CORS] 🔄 Network error - immediate retry with maximum anti-redirect protection...');
+          console.log('[CORS] 🔄 Network error detected, retrying with strict HTTPS...');
 
-          const maxProtectionHeaders: { [key: string]: string } = {
-            'Accept': 'application/json, text/plain, */*',
-            'Cache-Control': 'no-cache, no-store, must-revalidate',
-            'Pragma': 'no-cache',
-            'Expires': '0'
-          };
+          // Retry with strict HTTPS and explicit headers
+          const retryUrl = modifiedUrl.replace('http://', 'https://');
+          const retryReq = req.clone({
+            url: retryUrl,
+            setHeaders: {
+              'Accept': 'application/json',
+              'Cache-Control': 'no-cache, no-store, must-revalidate',
+              'Pragma': 'no-cache'
+            }
+          });
 
-          if (req.method === 'POST' && !req.headers.has('Content-Type')) {
-            maxProtectionHeaders['Content-Type'] = 'application/json';
-          }
-
-          const maxProtectedReq = req.clone({ setHeaders: maxProtectionHeaders });
-
-          return next.handle(maxProtectedReq).pipe(
+          return next.handle(retryReq).pipe(
             tap(response => {
               if (response instanceof HttpResponse) {
-                console.log('[CORS] 🎉 Max-protected request succeeded:', req.method, req.url);
+                console.log('[CORS] 🎉 Retry succeeded');
               }
             }),
-            catchError(maxError => {
-              console.error('[CORS] 💥 Max-protected request failed, final attempt...');
-
-              const finalReq = req.clone({
-                setHeaders: {
-                  'Accept': 'application/json',
-                  'X-Final-Attempt': 'true'
-                }
-              });
-
-              return next.handle(finalReq).pipe(
-                tap(finalResponse => {
-                  if (finalResponse instanceof HttpResponse) {
-                    console.log('[CORS] 🏆 Final attempt succeeded:', req.method, req.url);
-                  }
-                }),
-                catchError(finalError => {
-                  console.error('[CORS]  All attempts failed completely for:', req.method, req.url);
-
-                  const corsError = new HttpErrorResponse({
-                    error: {
-                      message: 'CORS_REDIRECT_ERROR',
-                      details: 'This endpoint has CORS issues due to HTTPS->HTTP redirections. Other features should work normally.',
-                      url: req.url,
-                      method: req.method
-                    },
-                    status: 0,
-                    statusText: 'CORS Redirect Error',
-                    url: req.url
-                  });
-
-                  return throwError(() => corsError);
-                })
-              );
+            catchError(retryError => {
+              console.error('[CORS] 💥 All retries failed');
+              return throwError(() => retryError);
             })
           );
         }

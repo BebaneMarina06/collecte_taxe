@@ -31,10 +31,8 @@ def login_citoyen(
     """
     Authentification d'un citoyen (contribuable) par téléphone et mot de passe
     """
-    # Chercher le contribuable par téléphone avec ses relations
-    contribuable = db.query(Contribuable).options(
-        joinedload(Contribuable.type_contribuable)
-    ).filter(
+    # Chercher le contribuable par téléphone
+    contribuable = db.query(Contribuable).filter(
         Contribuable.telephone == form_data.username
     ).first()
     
@@ -73,28 +71,18 @@ def login_citoyen(
         expires_delta=access_token_expires
     )
     
-    # Construire la réponse avec type_contribuable
-    contribuable_data = {
-        "id": contribuable.id,
-        "nom": contribuable.nom,
-        "prenom": contribuable.prenom,
-        "telephone": contribuable.telephone,
-        "email": contribuable.email,
-        "adresse": contribuable.adresse,
-        "matricule": contribuable.matricule
-    }
-    
-    # Ajouter le type de contribuable s'il existe
-    if contribuable.type_contribuable:
-        contribuable_data["type_contribuable"] = {
-            "id": contribuable.type_contribuable.id,
-            "nom": contribuable.type_contribuable.nom
-        }
-    
     return {
         "access_token": access_token,
         "token_type": "bearer",
-        "contribuable": contribuable_data
+        "contribuable": {
+            "id": contribuable.id,
+            "nom": contribuable.nom,
+            "prenom": contribuable.prenom,
+            "telephone": contribuable.telephone,
+            "email": contribuable.email,
+            "adresse": contribuable.adresse,
+            "matricule": contribuable.matricule
+        }
     }
 
 

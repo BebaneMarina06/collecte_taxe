@@ -3,14 +3,11 @@ Routes pour la gestion des collectes
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 from typing import List, Optional
 from database.database import get_db
-from database.models import InfoCollecte, Taxe, StatutCollecteEnum, Contribuable
+from database.models import InfoCollecte, Taxe, StatutCollecteEnum, Contribuable, AffectationTaxe
 from schemas.info_collecte import InfoCollecteCreate, InfoCollecteUpdate, InfoCollecteResponse
-from schemas.type_contribuable import TypeContribuableBase
-from schemas.quartier import QuartierBase
-from schemas.collecteur import CollecteurBase
 from datetime import datetime, date
 from decimal import Decimal
 from pydantic import BaseModel, Field
@@ -23,45 +20,49 @@ router = APIRouter(
 )
 
 
-class CollecteAnnulationRequest(BaseModel):
-    raison: str = Field(..., min_length=3, description="Raison de l'annulation")
-
-
-class ContribuableDetailResponse(BaseModel):
-    """Réponse détaillée des informations d'un contribuable pour auto-remplissage"""
-    id: int
-    nom: str
-    prenom: Optional[str] = None
-    telephone: str
-    email: Optional[str] = None
-    adresse: Optional[str] = None
-    nom_activite: Optional[str] = None
-    type_contribuable: Optional[TypeContribuableBase] = None
-    quartier: Optional[QuartierBase] = None
-    collecteur: Optional[CollecteurBase] = None
-    latitude: Optional[Decimal] = None
-    longitude: Optional[Decimal] = None
-    photo_url: Optional[str] = None
-    
-    class Config:
-        from_attributes = True
-
-
-@router.get("/contribuable/{contribuable_id}", response_model=ContribuableDetailResponse)
-def get_contribuable_details(contribuable_id: int, db: Session = Depends(get_db)):
-    """Récupère les informations détaillées d'un contribuable pour auto-remplissage lors d'une collecte"""
-    from sqlalchemy.orm import joinedload
-    
-    contribuable = db.query(Contribuable).options(
-        joinedload(Contribuable.type_contribuable),
-        joinedload(Contribuable.quartier),
-        joinedload(Contribuable.collecteur)
-    ).filter(Contribuable.id == contribuable_id).first()
-    
+@router.get("/contribuable/{contribuable_id}/taxes", response_model=dict)
+def get_contribuable_taxes(contribuable_id: int, db: Session = Depends(get_db)):
+    """Récupère les taxes actives d'un contribuable pour la sélection lors de la création d'une collecte"""
+    # Vérifier que le contribuable existe
+    contribuable = db.query(Contribuable).filter(Contribuable.id == contribuable_id).first()
     if not contribuable:
         raise HTTPException(status_code=404, detail="Contribuable non trouvé")
     
-    return contribuable
+    # Récupérer les affectations de taxes actives
+    affectations = db.query(AffectationTaxe).options(
+        joinedload(AffectationTaxe.taxe)
+    ).filter(
+        AffectationTaxe.contribuable_id == contribuable_id,
+        AffectationTaxe.actif == True
+    ).all()
+    
+    # Construire la réponse
+    taxes = []
+    for affectation in affectations:
+        taxe = affectation.taxe
+        taxes.append({
+            "affectation_id": affectation.id,
+            "taxe_id": taxe.id,
+            "taxe_nom": taxe.nom,
+            "taxe_code": taxe.code,
+            "montant": float(taxe.montant),
+            "montant_custom": float(affectation.montant_custom) if affectation.montant_custom else None,
+            "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else taxe.periodicite,
+            "description": taxe.description
+        })
+    
+    return {
+        "contribuable_id": contribuable_id,
+        "contribuable_nom": contribuable.nom,
+        "contribuable_prenom": contribuable.prenom,
+        "telephone": contribuable.telephone,
+        "collecteur_id": contribuable.collecteur_id,
+        "taxes": taxes
+    }
+
+
+class CollecteAnnulationRequest(BaseModel):
+    raison: str = Field(..., min_length=3, description="Raison de l'annulation")
 
 
 @router.get("/", response_model=List[InfoCollecteResponse])
@@ -78,15 +79,12 @@ def get_collectes(
     db: Session = Depends(get_db)
 ):
     """Récupère la liste des collectes avec filtres et relations"""
-    from sqlalchemy.orm import joinedload
-    from database.models import Contribuable
-    
-    from database.models import CollecteLocation
+    from database.models import CollecteItem, CollecteLocation
     
     query = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
-        joinedload(InfoCollecte.taxe),
         joinedload(InfoCollecte.collecteur),
+        joinedload(InfoCollecte.items_collecte),
         joinedload(InfoCollecte.location)
     )
     
@@ -95,7 +93,8 @@ def get_collectes(
     if contribuable_id:
         query = query.filter(InfoCollecte.contribuable_id == contribuable_id)
     if taxe_id:
-        query = query.filter(InfoCollecte.taxe_id == taxe_id)
+        # Filtrer par taxe en cherchant dans collecte_item
+        query = query.join(CollecteItem).filter(CollecteItem.taxe_id == taxe_id)
     if statut:
         try:
             statut_enum = StatutCollecteEnum(statut)
@@ -117,14 +116,12 @@ def get_collectes(
 @router.get("/{collecte_id}", response_model=InfoCollecteResponse)
 def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
     """Récupère une collecte par son ID avec toutes les relations"""
-    from sqlalchemy.orm import joinedload
-    
     from database.models import CollecteLocation
     
     collecte = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
-        joinedload(InfoCollecte.taxe),
         joinedload(InfoCollecte.collecteur),
+        joinedload(InfoCollecte.items_collecte),
         joinedload(InfoCollecte.location)
     ).filter(InfoCollecte.id == collecte_id).first()
     
@@ -135,25 +132,70 @@ def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
 
 @router.post("/", response_model=InfoCollecteResponse, status_code=201)
 def create_collecte(collecte: InfoCollecteCreate, db: Session = Depends(get_db)):
-    """Crée une nouvelle collecte"""
-    # Récupérer la taxe pour calculer la commission
-    taxe = db.query(Taxe).filter(Taxe.id == collecte.taxe_id).first()
-    if not taxe:
-        raise HTTPException(status_code=404, detail="Taxe non trouvée")
+    """Crée une nouvelle collecte avec plusieurs taxes"""
+    from database.models import CollecteItem
     
-    # Calculer la commission
-    commission = float(collecte.montant) * (float(taxe.commission_pourcentage) / 100)
+    # Vérifier que le contribuable existe
+    contribuable = db.query(Contribuable).filter(Contribuable.id == collecte.contribuable_id).first()
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    # Vérifier que le collecteur existe
+    from database.models import Collecteur
+    collecteur = db.query(Collecteur).filter(Collecteur.id == collecte.collecteur_id).first()
+    if not collecteur:
+        raise HTTPException(status_code=404, detail="Collecteur non trouvé")
+    
+    # Vérifier que toutes les taxes existent et calculer le montant total et commission
+    montant_total = Decimal('0')
+    commission_total = Decimal('0')
+    items_to_create = []
+    
+    for item in collecte.items:
+        taxe = db.query(Taxe).filter(Taxe.id == item.taxe_id).first()
+        if not taxe:
+            raise HTTPException(status_code=404, detail=f"Taxe avec ID {item.taxe_id} non trouvée")
+        
+        # Calculer la commission pour cet article
+        commission = item.montant * (Decimal(str(taxe.commission_pourcentage)) / Decimal('100'))
+        
+        montant_total += item.montant
+        commission_total += commission
+        
+        items_to_create.append({
+            'taxe_id': item.taxe_id,
+            'montant': item.montant,
+            'commission': commission
+        })
     
     # Générer une référence unique
     reference = f"COL-{datetime.utcnow().strftime('%Y%m%d')}-{db.query(InfoCollecte).count() + 1:04d}"
     
+    # Créer la collecte
     db_collecte = InfoCollecte(
-        **collecte.dict(),
-        commission=Decimal(str(commission)),
+        contribuable_id=collecte.contribuable_id,
+        collecteur_id=collecte.collecteur_id,
+        montant_total=montant_total,
+        commission_total=commission_total,
+        type_paiement=collecte.type_paiement,
+        billetage=collecte.billetage,
+        date_collecte=collecte.date_collecte,
         reference=reference,
         statut=StatutCollecteEnum.PENDING
     )
     db.add(db_collecte)
+    db.flush()  # Flush pour obtenir l'ID sans commit
+    
+    # Créer les articles de collecte
+    for item_data in items_to_create:
+        db_item = CollecteItem(
+            collecte_id=db_collecte.id,
+            taxe_id=item_data['taxe_id'],
+            montant=item_data['montant'],
+            commission=item_data['commission']
+        )
+        db.add(db_item)
+    
     db.commit()
     db.refresh(db_collecte)
     return db_collecte
