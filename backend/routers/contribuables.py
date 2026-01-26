@@ -548,3 +548,66 @@ def get_contribuable_taxations(
         })
     
     return taxations
+
+
+@router.post("/{contribuable_id}/assign-taxes", response_model=dict)
+def assign_taxes_to_contribuable(
+    contribuable_id: int,
+    payload: dict,
+    db: Session = Depends(get_db)
+):
+    """Assigne des taxes à un contribuable"""
+    from database.models import AffectationTaxe, Taxe
+    from datetime import datetime
+    
+    # Vérifier que le contribuable existe
+    contribuable = db.query(Contribuable).filter(
+        Contribuable.id == contribuable_id
+    ).first()
+    
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+    
+    # Récupérer les taxe_ids du payload
+    taxe_ids = payload.get('taxe_ids', [])
+    if not taxe_ids or len(taxe_ids) == 0:
+        raise HTTPException(status_code=400, detail="Veuillez sélectionner au moins une taxe")
+    
+    # Assigner les taxes
+    affectations_created = []
+    for taxe_id in taxe_ids:
+        # Vérifier que la taxe existe
+        taxe = db.query(Taxe).filter(Taxe.id == taxe_id).first()
+        if not taxe:
+            raise HTTPException(status_code=404, detail=f"Taxe avec ID {taxe_id} non trouvée")
+        
+        # Vérifier si l'affectation existe déjà et est active
+        existing = db.query(AffectationTaxe).filter(
+            AffectationTaxe.contribuable_id == contribuable_id,
+            AffectationTaxe.taxe_id == taxe_id,
+            AffectationTaxe.actif == True
+        ).first()
+        
+        if existing:
+            # La taxe est déjà assignée
+            continue
+        
+        # Créer l'affectation
+        affectation = AffectationTaxe(
+            contribuable_id=contribuable_id,
+            taxe_id=taxe_id,
+            date_debut=datetime.utcnow(),
+            actif=True
+        )
+        db.add(affectation)
+        affectations_created.append(taxe.nom)
+    
+    db.commit()
+    
+    return {
+        "success": True,
+        "message": f"Taxes assignées avec succès",
+        "contribuable_id": contribuable_id,
+        "taxe_ids": taxe_ids,
+        "affectations_created": affectations_created
+    }
