@@ -3,10 +3,10 @@ Routes pour la gestion des collectes
 """
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session
 from typing import List, Optional
 from database.database import get_db
-from database.models import InfoCollecte, Taxe, StatutCollecteEnum, Contribuable, AffectationTaxe
+from database.models import InfoCollecte, Taxe, StatutCollecteEnum
 from schemas.info_collecte import InfoCollecteCreate, InfoCollecteUpdate, InfoCollecteResponse
 from datetime import datetime, date
 from decimal import Decimal
@@ -18,47 +18,6 @@ router = APIRouter(
     tags=["collectes"],
     dependencies=[Depends(get_current_active_user)],
 )
-
-
-@router.get("/contribuable/{contribuable_id}/taxes", response_model=dict)
-def get_contribuable_taxes(contribuable_id: int, db: Session = Depends(get_db)):
-    """Récupère les taxes actives d'un contribuable pour la sélection lors de la création d'une collecte"""
-    # Vérifier que le contribuable existe
-    contribuable = db.query(Contribuable).filter(Contribuable.id == contribuable_id).first()
-    if not contribuable:
-        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
-    
-    # Récupérer les affectations de taxes actives
-    affectations = db.query(AffectationTaxe).options(
-        joinedload(AffectationTaxe.taxe)
-    ).filter(
-        AffectationTaxe.contribuable_id == contribuable_id,
-        AffectationTaxe.actif == True
-    ).all()
-    
-    # Construire la réponse
-    taxes = []
-    for affectation in affectations:
-        taxe = affectation.taxe
-        taxes.append({
-            "affectation_id": affectation.id,
-            "taxe_id": taxe.id,
-            "taxe_nom": taxe.nom,
-            "taxe_code": taxe.code,
-            "montant": float(taxe.montant),
-            "montant_custom": float(affectation.montant_custom) if affectation.montant_custom else None,
-            "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else taxe.periodicite,
-            "description": taxe.description
-        })
-    
-    return {
-        "contribuable_id": contribuable_id,
-        "contribuable_nom": contribuable.nom,
-        "contribuable_prenom": contribuable.prenom,
-        "telephone": contribuable.telephone,
-        "collecteur_id": contribuable.collecteur_id,
-        "taxes": taxes
-    }
 
 
 class CollecteAnnulationRequest(BaseModel):
@@ -79,12 +38,15 @@ def get_collectes(
     db: Session = Depends(get_db)
 ):
     """Récupère la liste des collectes avec filtres et relations"""
+    from sqlalchemy.orm import joinedload
+    from database.models import Contribuable
+    
     from database.models import CollecteLocation
     
     query = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
-        joinedload(InfoCollecte.collecteur),
         joinedload(InfoCollecte.taxe),
+        joinedload(InfoCollecte.collecteur),
         joinedload(InfoCollecte.location)
     )
     
@@ -93,8 +55,7 @@ def get_collectes(
     if contribuable_id:
         query = query.filter(InfoCollecte.contribuable_id == contribuable_id)
     if taxe_id:
-        # Filtrer par taxe en cherchant dans collecte_item
-        query = query.join(CollecteItem).filter(CollecteItem.taxe_id == taxe_id)
+        query = query.filter(InfoCollecte.taxe_id == taxe_id)
     if statut:
         try:
             statut_enum = StatutCollecteEnum(statut)
@@ -116,12 +77,14 @@ def get_collectes(
 @router.get("/{collecte_id}", response_model=InfoCollecteResponse)
 def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
     """Récupère une collecte par son ID avec toutes les relations"""
+    from sqlalchemy.orm import joinedload
+    
     from database.models import CollecteLocation
     
     collecte = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
-        joinedload(InfoCollecte.collecteur),
         joinedload(InfoCollecte.taxe),
+        joinedload(InfoCollecte.collecteur),
         joinedload(InfoCollecte.location)
     ).filter(InfoCollecte.id == collecte_id).first()
     
@@ -133,39 +96,20 @@ def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
 @router.post("/", response_model=InfoCollecteResponse, status_code=201)
 def create_collecte(collecte: InfoCollecteCreate, db: Session = Depends(get_db)):
     """Crée une nouvelle collecte"""
-    
-    # Vérifier que le contribuable existe
-    contribuable = db.query(Contribuable).filter(Contribuable.id == collecte.contribuable_id).first()
-    if not contribuable:
-        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
-    
-    # Vérifier que la taxe existe
+    # Récupérer la taxe pour calculer la commission
     taxe = db.query(Taxe).filter(Taxe.id == collecte.taxe_id).first()
     if not taxe:
         raise HTTPException(status_code=404, detail="Taxe non trouvée")
     
-    # Vérifier que le collecteur existe
-    from database.models import Collecteur
-    collecteur = db.query(Collecteur).filter(Collecteur.id == collecte.collecteur_id).first()
-    if not collecteur:
-        raise HTTPException(status_code=404, detail="Collecteur non trouvé")
-    
     # Calculer la commission
-    commission = collecte.montant * (Decimal(str(taxe.commission_pourcentage)) / Decimal('100'))
+    commission = float(collecte.montant) * (float(taxe.commission_pourcentage) / 100)
     
     # Générer une référence unique
     reference = f"COL-{datetime.utcnow().strftime('%Y%m%d')}-{db.query(InfoCollecte).count() + 1:04d}"
     
-    # Créer la collecte
     db_collecte = InfoCollecte(
-        contribuable_id=collecte.contribuable_id,
-        taxe_id=collecte.taxe_id,
-        collecteur_id=collecte.collecteur_id,
-        montant=collecte.montant,
-        commission=commission,
-        type_paiement=collecte.type_paiement,
-        billetage=collecte.billetage,
-        date_collecte=collecte.date_collecte,
+        **collecte.dict(),
+        commission=Decimal(str(commission)),
         reference=reference,
         statut=StatutCollecteEnum.PENDING
     )
