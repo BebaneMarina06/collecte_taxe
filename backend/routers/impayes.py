@@ -4,11 +4,11 @@ Routes pour la gestion des impayés
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, joinedload
-from sqlalchemy import func, and_, or_, case
+from sqlalchemy import func, and_, or_, case, text
 from typing import List, Optional
 from database.database import get_db
 from database.models import (
-    DossierImpaye, Contribuable, AffectationTaxe, InfoCollecte, 
+    DossierImpaye, Contribuable, AffectationTaxe, InfoCollecte,
     StatutCollecteEnum, Taxe, Collecteur
 )
 from schemas.dossier_impaye import (
@@ -432,5 +432,234 @@ def get_statistiques_impayes(
         "moyenne_jours_retard": round(float(moyenne_retard), 1) if moyenne_retard else 0,
         "par_priorite": par_priorite,
         "par_statut": par_statut
+    }
+
+
+# --- Endpoints pour interroger la vue impayes_view ---
+
+@router.get("/vue/liste", response_model=dict)
+def get_impayes_depuis_vue(
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=1000),
+    statut: Optional[str] = Query(None, description="Filtrer par statut: PAYE, PARTIEL, IMPAYE, RETARD"),
+    contribuable_id: Optional[int] = Query(None, description="Filtrer par contribuable"),
+    taxe_id: Optional[int] = Query(None, description="Filtrer par taxe"),
+    collecteur_id: Optional[int] = Query(None, description="Filtrer par collecteur assigné"),
+    zone_nom: Optional[str] = Query(None, description="Filtrer par zone"),
+    quartier_nom: Optional[str] = Query(None, description="Filtrer par quartier"),
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère les impayés depuis la vue impayes_view (calcul automatique en temps réel).
+    Cette vue ne nécessite aucune synchronisation et est toujours à jour.
+    """
+    # Construire la requête SQL
+    query = "SELECT * FROM impayes_view WHERE 1=1"
+    params = {}
+
+    if statut:
+        query += " AND statut = :statut"
+        params["statut"] = statut
+
+    if contribuable_id:
+        query += " AND contribuable_id = :contribuable_id"
+        params["contribuable_id"] = contribuable_id
+
+    if taxe_id:
+        query += " AND taxe_id = :taxe_id"
+        params["taxe_id"] = taxe_id
+
+    # Note: Pour filtrer par collecteur, la vue doit avoir le champ collecteur_id
+    # Actuellement elle a collecteur_nom et collecteur_prenom
+
+    if zone_nom:
+        query += " AND zone_nom = :zone_nom"
+        params["zone_nom"] = zone_nom
+
+    if quartier_nom:
+        query += " AND quartier_nom = :quartier_nom"
+        params["quartier_nom"] = quartier_nom
+
+    # Compter le total
+    count_query = f"SELECT COUNT(*) as total FROM ({query}) as count_subquery"
+    total_result = db.execute(text(count_query), params).fetchone()
+    total = total_result[0] if total_result else 0
+
+    # Ajouter la pagination
+    query += " ORDER BY montant_restant DESC, date_echeance ASC"
+    query += " LIMIT :limit OFFSET :skip"
+    params["limit"] = limit
+    params["skip"] = skip
+
+    # Exécuter la requête
+    result = db.execute(text(query), params)
+    columns = result.keys()
+
+    # Convertir les résultats en dictionnaires
+    items = []
+    for row in result:
+        item = {}
+        for i, col in enumerate(columns):
+            value = row[i]
+            # Convertir les Decimal en float pour JSON
+            if isinstance(value, Decimal):
+                value = float(value)
+            # Convertir les datetime en ISO string
+            elif isinstance(value, (datetime, date)):
+                value = value.isoformat()
+            item[col] = value
+        items.append(item)
+
+    return {
+        "items": items,
+        "total": total,
+        "skip": skip,
+        "limit": limit
+    }
+
+
+@router.get("/vue/contribuable/{contribuable_id}", response_model=dict)
+def get_impayes_contribuable_depuis_vue(
+    contribuable_id: int,
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère tous les impayés d'un contribuable depuis la vue impayes_view.
+    Inclut les taxes payées, partielles, impayées et en retard.
+    """
+    query = """
+        SELECT * FROM impayes_view
+        WHERE contribuable_id = :contribuable_id
+        ORDER BY
+            CASE statut
+                WHEN 'RETARD' THEN 1
+                WHEN 'IMPAYE' THEN 2
+                WHEN 'PARTIEL' THEN 3
+                WHEN 'PAYE' THEN 4
+            END,
+            montant_restant DESC
+    """
+
+    result = db.execute(text(query), {"contribuable_id": contribuable_id})
+    columns = result.keys()
+
+    items = []
+    for row in result:
+        item = {}
+        for i, col in enumerate(columns):
+            value = row[i]
+            if isinstance(value, Decimal):
+                value = float(value)
+            elif isinstance(value, (datetime, date)):
+                value = value.isoformat()
+            item[col] = value
+        items.append(item)
+
+    # Calculer les totaux pour ce contribuable
+    totaux = {
+        "montant_total_attendu": sum(item["montant_attendu"] for item in items),
+        "montant_total_paye": sum(item["montant_paye"] for item in items),
+        "montant_total_restant": sum(item["montant_restant"] for item in items),
+        "nombre_taxes_total": len(items),
+        "nombre_taxes_payees": sum(1 for item in items if item["statut"] == "PAYE"),
+        "nombre_taxes_impayees": sum(1 for item in items if item["statut"] in ["IMPAYE", "RETARD"]),
+        "nombre_taxes_partielles": sum(1 for item in items if item["statut"] == "PARTIEL"),
+    }
+
+    return {
+        "contribuable_id": contribuable_id,
+        "contribuable_nom": items[0]["contribuable_nom"] if items else None,
+        "contribuable_prenom": items[0]["contribuable_prenom"] if items else None,
+        "items": items,
+        "totaux": totaux
+    }
+
+
+@router.get("/vue/statistiques", response_model=dict)
+def get_statistiques_depuis_vue(
+    db: Session = Depends(get_db)
+):
+    """
+    Récupère les statistiques globales depuis la vue impayes_view.
+    Ces statistiques sont calculées en temps réel et toujours à jour.
+    """
+    # Statistiques globales
+    stats_query = """
+        SELECT
+            COUNT(*) as total_affectations,
+            COUNT(CASE WHEN statut = 'PAYE' THEN 1 END) as total_paye,
+            COUNT(CASE WHEN statut = 'PARTIEL' THEN 1 END) as total_partiel,
+            COUNT(CASE WHEN statut = 'IMPAYE' THEN 1 END) as total_impaye,
+            COUNT(CASE WHEN statut = 'RETARD' THEN 1 END) as total_retard,
+            SUM(montant_attendu) as montant_total_attendu,
+            SUM(montant_paye) as montant_total_paye,
+            SUM(montant_restant) as montant_total_restant,
+            SUM(CASE WHEN statut IN ('IMPAYE', 'RETARD', 'PARTIEL') THEN montant_restant ELSE 0 END) as montant_impaye_total
+        FROM impayes_view
+    """
+
+    result = db.execute(text(stats_query)).fetchone()
+
+    # Statistiques par zone
+    stats_zone_query = """
+        SELECT
+            zone_nom,
+            COUNT(*) as nb_affectations,
+            COUNT(CASE WHEN statut IN ('IMPAYE', 'RETARD') THEN 1 END) as nb_impayes,
+            SUM(montant_restant) as montant_restant_total
+        FROM impayes_view
+        WHERE statut IN ('IMPAYE', 'RETARD', 'PARTIEL')
+        GROUP BY zone_nom
+        ORDER BY montant_restant_total DESC
+    """
+
+    zones_result = db.execute(text(stats_zone_query))
+    zones = []
+    for row in zones_result:
+        zones.append({
+            "zone_nom": row[0],
+            "nb_affectations": row[1],
+            "nb_impayes": row[2],
+            "montant_restant_total": float(row[3]) if row[3] else 0
+        })
+
+    # Statistiques par collecteur
+    stats_collecteur_query = """
+        SELECT
+            collecteur_nom,
+            collecteur_prenom,
+            COUNT(*) as nb_affectations,
+            COUNT(CASE WHEN statut IN ('IMPAYE', 'RETARD') THEN 1 END) as nb_impayes,
+            SUM(CASE WHEN statut IN ('IMPAYE', 'RETARD', 'PARTIEL') THEN montant_restant ELSE 0 END) as montant_a_recouvrer
+        FROM impayes_view
+        GROUP BY collecteur_nom, collecteur_prenom
+        ORDER BY montant_a_recouvrer DESC
+    """
+
+    collecteurs_result = db.execute(text(stats_collecteur_query))
+    collecteurs = []
+    for row in collecteurs_result:
+        collecteurs.append({
+            "collecteur_nom": row[0],
+            "collecteur_prenom": row[1],
+            "nb_affectations": row[2],
+            "nb_impayes": row[3],
+            "montant_a_recouvrer": float(row[4]) if row[4] else 0
+        })
+
+    return {
+        "globales": {
+            "total_affectations": result[0] or 0,
+            "total_paye": result[1] or 0,
+            "total_partiel": result[2] or 0,
+            "total_impaye": result[3] or 0,
+            "total_retard": result[4] or 0,
+            "montant_total_attendu": float(result[5]) if result[5] else 0,
+            "montant_total_paye": float(result[6]) if result[6] else 0,
+            "montant_total_restant": float(result[7]) if result[7] else 0,
+            "montant_impaye_total": float(result[8]) if result[8] else 0,
+        },
+        "par_zone": zones,
+        "par_collecteur": collecteurs
     }
 

@@ -662,6 +662,21 @@ export class ApiService {
     return this.http.post(`${this.apiUrl}/impayes/calculer-penalites`, request);
   }
 
+  // Méthodes pour interroger la vue impayes_view (calcul automatique en temps réel)
+
+  getImpayesVue(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/impayes/vue/liste`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getImpayesContribuableVue(contribuableId: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/impayes/vue/contribuable/${contribuableId}`);
+  }
+
+  getStatistiquesImpayesVue(): Observable<any> {
+    return this.http.get(`${this.apiUrl}/impayes/vue/statistiques`);
+  }
+
   getStatistiquesImpayes(): Observable<any> {
     return this.http.get(`${this.apiUrl}/impayes/statistiques/globales`);
   }
