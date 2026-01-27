@@ -2,8 +2,9 @@
 Routes pour l'authentification et les services citoyens
 """
 
-from fastapi import APIRouter, Depends, HTTPException, status, Query
+from fastapi import APIRouter, Depends, HTTPException, status, Query, UploadFile, File
 from fastapi.security import OAuth2PasswordRequestForm
+from fastapi.responses import JSONResponse
 from sqlalchemy.orm import Session, joinedload
 from sqlalchemy import func
 from datetime import datetime, timedelta
@@ -16,6 +17,8 @@ from pydantic import BaseModel, EmailStr
 import random
 import os
 import smtplib
+import uuid
+from pathlib import Path
 from email.message import EmailMessage
 import logging
 
@@ -476,3 +479,74 @@ def create_demande_citoyen(
         "pieces_jointes": db_demande.pieces_jointes,
         "created_at": db_demande.created_at.isoformat() if db_demande.created_at else None
     }
+
+
+# Configuration upload fichiers demandes
+DEMANDES_UPLOAD_DIR = Path(__file__).parent.parent / "uploads" / "demandes"
+DEMANDES_UPLOAD_DIR.mkdir(parents=True, exist_ok=True)
+ALLOWED_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".pdf", ".doc", ".docx"}
+MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+@router.post("/demandes/{demande_id}/fichiers")
+async def upload_fichier_demande(
+    demande_id: int,
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    """
+    Upload un fichier pour une demande citoyen
+    """
+    # Vérifier que la demande existe
+    demande = db.query(DemandeCitoyen).filter(DemandeCitoyen.id == demande_id).first()
+    if not demande:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Demande non trouvée"
+        )
+
+    # Valider le fichier
+    if not file.filename:
+        raise HTTPException(status_code=400, detail="Nom de fichier manquant")
+
+    file_ext = Path(file.filename).suffix.lower()
+    if file_ext not in ALLOWED_EXTENSIONS:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Format non autorisé. Formats acceptés: {', '.join(ALLOWED_EXTENSIONS)}"
+        )
+
+    # Lire le contenu
+    contents = await file.read()
+    if len(contents) > MAX_FILE_SIZE:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Fichier trop volumineux. Taille max: {MAX_FILE_SIZE / 1024 / 1024} MB"
+        )
+
+    # Sauvegarder le fichier
+    unique_filename = f"{demande_id}_{uuid.uuid4()}{file_ext}"
+    file_path = DEMANDES_UPLOAD_DIR / unique_filename
+
+    try:
+        with open(file_path, "wb") as f:
+            f.write(contents)
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Erreur lors de l'enregistrement: {str(e)}"
+        )
+
+    # Mettre à jour les pièces jointes de la demande
+    pieces_jointes = demande.pieces_jointes or []
+    file_url = f"/uploads/demandes/{unique_filename}"
+    pieces_jointes.append(file_url)
+    demande.pieces_jointes = pieces_jointes
+    db.commit()
+
+    return JSONResponse({
+        "url": file_url,
+        "filename": unique_filename,
+        "size": len(contents),
+        "message": "Fichier uploadé avec succès"
+    })
