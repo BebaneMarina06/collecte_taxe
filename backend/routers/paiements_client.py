@@ -184,7 +184,7 @@ async def callback_bamboopay(
         ).first()
     
     if not transaction:
-        logger.warning(f"⚠️ Transaction non trouvée pour callback: {callback_data.dict()}")
+        logger.warning(f"Transaction non trouvée pour callback: {callback_data.dict()}")
         return JSONResponse(
             status_code=404,
             content={"message": "Transaction non trouvée"}
@@ -236,7 +236,7 @@ async def callback_bamboopay(
     
     db.commit()
     
-    logger.info(f"✅ Transaction {transaction.billing_id} mise à jour: {transaction.statut}")
+    logger.info(f"Transaction {transaction.billing_id} mise à jour: {transaction.statut}")
     
     return JSONResponse(
         status_code=200,

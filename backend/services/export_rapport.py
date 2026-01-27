@@ -180,13 +180,13 @@ def get_logo_path() -> Optional[Path]:
                 abs_path = path.resolve()
             
             if abs_path.exists() and abs_path.is_file():
-                print(f"✅ Logo trouvé à: {abs_path}")
+                print(f"Logo trouvé à: {abs_path}")
                 return abs_path
         except Exception as e:
             continue
     
     # Si aucun logo n'est trouvé, afficher les chemins testés
-    print("⚠️ Aucun logo trouvé. Chemins testés:")
+    print("Aucun logo trouvé. Chemins testés:")
     for path in possible_paths[:5]:  # Limiter l'affichage
         try:
             if not path.is_absolute():
@@ -259,7 +259,7 @@ def generate_pdf_rapport(rapport_data: Dict[str, Any], filename: Optional[str] =
             # Charger l'image avec gestion d'erreur
             try:
                 logo = Image(logo_str, width=1.5*inch, height=1.5*inch, preserveAspectRatio=True)
-                print(f"✅ Logo chargé avec succès: {logo_str}")
+                print(f"Logo chargé avec succès: {logo_str}")
                 
                 # Créer un tableau pour aligner le logo et le texte
                 header_cell = [
@@ -278,13 +278,13 @@ def generate_pdf_rapport(rapport_data: Dict[str, Any], filename: Optional[str] =
                 story.append(header_table)
                 print("✅ Logo ajouté avec succès dans l'en-tête")
             except Exception as img_error:
-                print(f"❌ Erreur lors du chargement de l'image: {img_error}")
+                print(f"Erreur lors du chargement de l'image: {img_error}")
                 import traceback
                 traceback.print_exc()
                 raise img_error
         except Exception as e:
             import traceback
-            print(f"❌ Erreur lors du chargement du logo: {e}")
+            print(f"Erreur lors du chargement du logo: {e}")
             traceback.print_exc()
             # Fallback sans logo
             title = Paragraph("RAPPORT DE COLLECTE", title_style)
@@ -292,7 +292,7 @@ def generate_pdf_rapport(rapport_data: Dict[str, Any], filename: Optional[str] =
             story.append(Paragraph("Mairie de Libreville", styles['Heading2']))
     else:
         # Pas de logo, afficher juste le titre
-        print("⚠️ Logo non trouvé, utilisation du titre sans logo")
+        print("Logo non trouvé, utilisation du titre sans logo")
         title = Paragraph("RAPPORT DE COLLECTE", title_style)
         story.append(title)
         story.append(Paragraph("Mairie de Libreville", styles['Heading2']))

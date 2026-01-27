@@ -14,7 +14,7 @@ from database.database import DATABASE_URL
 
 def run_migration():
     """Exécute la migration SQL"""
-    print("🚀 Démarrage de la migration...")
+    print("Démarrage de la migration...")
 
     # Créer la connexion
     engine = create_engine(DATABASE_URL)
@@ -33,14 +33,14 @@ def run_migration():
 
             for statement in statements:
                 if statement:
-                    print(f"⚙️ Exécution: {statement[:60]}...")
+                    print(f"Exécution: {statement[:60]}...")
                     connection.execute(text(statement))
 
             connection.commit()
-            print("✅ Migration exécutée avec succès!")
+            print("Migration exécutée avec succès!")
 
     except Exception as e:
-        print(f"❌ Erreur lors de la migration: {e}")
+        print(f"Erreur lors de la migration: {e}")
         sys.exit(1)
 
 if __name__ == "__main__":

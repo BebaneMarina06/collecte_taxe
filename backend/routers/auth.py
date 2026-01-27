@@ -87,7 +87,7 @@ def register(
 ):
     """
     Créer un nouvel utilisateur (nécessite authentification).
-    ⚠️ DEPRECATED: Utilisez plutôt POST /api/utilisateurs
+    DEPRECATED: Utilisez plutôt POST /api/utilisateurs
     """
     # Vérifier que seul un admin peut créer des utilisateurs
     if current_user.role != RoleEnum.ADMIN.value:

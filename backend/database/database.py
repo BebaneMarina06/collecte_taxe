@@ -31,7 +31,7 @@ if os.path.exists(env_path):
                         key, value = line.split('=', 1)
                         os.environ[key.strip()] = value.strip()
     except Exception as e:
-        print(f"⚠️ Erreur lors du chargement du .env: {e}")
+        print(f"Erreur lors du chargement du .env: {e}")
         load_dotenv()
 else:
     load_dotenv()
@@ -67,7 +67,7 @@ try:
             ))
 except Exception as e:
     # Si le parsing échoue, utiliser l'URL telle quelle
-    print(f"⚠️ Avertissement: Impossible d'encoder l'URL: {e}")
+    print(f"Avertissement: Impossible d'encoder l'URL: {e}")
 
 # Création du moteur SQLAlchemy avec paramètres d'encodage
 engine = create_engine(
@@ -102,11 +102,11 @@ def init_db():
         with engine.begin() as conn:
             # Activer l'extension PostGIS si elle n'existe pas
             conn.execute(text("CREATE EXTENSION IF NOT EXISTS postgis;"))
-        print("✅ Extension PostGIS activée ou déjà présente")
+        print("Extension PostGIS activée ou déjà présente")
     except Exception as e:
         # Si l'activation échoue (droits insuffisants, etc.), on continue quand même
         # car PostGIS pourrait être déjà activé ou les tables pourraient ne pas nécessiter PostGIS
-        print(f"⚠️ Avertissement: Impossible d'activer PostGIS automatiquement: {e}")
+        print(f"Avertissement: Impossible d'activer PostGIS automatiquement: {e}")
         print("   Si vous avez des colonnes geometry, vous devrez activer PostGIS manuellement:")
         print("   CREATE EXTENSION IF NOT EXISTS postgis;")
     

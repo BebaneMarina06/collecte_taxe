@@ -167,10 +167,10 @@ def _create_cartographie_view(db: Session):
     try:
         db.execute(text(view_sql))
         db.commit()
-        print("✅ Vue cartographie_contribuable_view créée avec succès")
+        print("Vue cartographie_contribuable_view créée avec succès")
     except Exception as e:
         db.rollback()
-        print(f"⚠️ Erreur lors de la création de la vue: {e}")
+        print(f"Erreur lors de la création de la vue: {e}")
         raise
 
 

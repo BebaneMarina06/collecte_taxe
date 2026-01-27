@@ -27,7 +27,7 @@ class BambooPayService:
         
         # Version correcte (celle du repo)
         if (not os.getenv("BAMBOOPAY_MERCHANT_ID") or not os.getenv("BAMBOOPAY_MERCHANT_SECRET")):
-            logger.warning("⚠️ Identifiants BambooPay non fournis dans l'environnement, utilisation des valeurs ITAXE par défaut.")
+            logger.warning("Identifiants BambooPay non fournis dans l'environnement, utilisation des valeurs ITAXE par défaut.")
     
     def _get_auth_header(self) -> str:
         """Génère l'en-tête d'authentification Basic"""
@@ -75,7 +75,7 @@ class BambooPayService:
             payload["update_status_url"] = update_status_url
         
         if self.debug_mode:
-            logger.info(f"🌐 Appel BambooPay /send: {url}")
+            logger.info(f"Appel BambooPay /send: {url}")
             logger.debug(f"Payload: {payload}")
         
         try:
@@ -89,7 +89,7 @@ class BambooPayService:
                 if response.status_code == 200:
                     data = response.json()
                     if self.debug_mode:
-                        logger.info(f"✅ Paiement initié avec succès: {data.get('redirect_url', 'N/A')}")
+                        logger.info(f"Paiement initié avec succès: {data.get('redirect_url', 'N/A')}")
                     return {
                         "success": True,
                         "redirect_url": data.get("redirect_url"),
@@ -102,7 +102,7 @@ class BambooPayService:
                     except:
                         error_data = {"message": response.text}
                     
-                    logger.error(f"❌ Erreur BambooPay /send ({response.status_code}): {error_data}")
+                    logger.error(f"Erreur BambooPay /send ({response.status_code}): {error_data}")
                     return {
                         "success": False,
                         "error": error_data.get("message", f"Erreur {response.status_code}"),
@@ -110,14 +110,14 @@ class BambooPayService:
                         "data": error_data
                     }
         except httpx.TimeoutException:
-            logger.error("⏱️ Timeout lors de l'appel à BambooPay")
+            logger.error("Timeout lors de l'appel à BambooPay")
             return {
                 "success": False,
                 "error": "Timeout lors de la connexion à BambooPay",
                 "code": 408
             }
         except Exception as e:
-            logger.error(f"❌ Exception lors de l'appel BambooPay: {str(e)}", exc_info=True)
+            logger.error(f"Exception lors de l'appel BambooPay: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "error": f"Erreur lors de l'appel à BambooPay: {str(e)}",
@@ -151,7 +151,7 @@ class BambooPayService:
             payload["operateur"] = operateur
         
         if self.debug_mode:
-            logger.info(f"🌐 Appel BambooPay /mobile/instant-payment: {url}")
+            logger.info(f"Appel BambooPay /mobile/instant-payment: {url}")
             logger.debug(f"Payload: {payload}")
         
         try:
@@ -165,7 +165,7 @@ class BambooPayService:
                 if response.status_code == 202:
                     data = response.json()
                     if self.debug_mode:
-                        logger.info(f"✅ Paiement instantané initié: {data.get('reference_bp', 'N/A')}")
+                        logger.info(f"Paiement instantané initié: {data.get('reference_bp', 'N/A')}")
                     return {
                         "success": data.get("status", False),
                         "reference_bp": data.get("reference_bp"),
@@ -180,7 +180,7 @@ class BambooPayService:
                     except:
                         error_data = {"message": response.text}
                     
-                    logger.error(f"❌ Erreur BambooPay /mobile/instant-payment ({response.status_code}): {error_data}")
+                    logger.error(f"Erreur BambooPay /mobile/instant-payment ({response.status_code}): {error_data}")
                     return {
                         "success": False,
                         "error": error_data.get("message", f"Erreur {response.status_code}"),
@@ -188,14 +188,14 @@ class BambooPayService:
                         "data": error_data
                     }
         except httpx.TimeoutException:
-            logger.error("⏱️ Timeout lors de l'appel à BambooPay")
+            logger.error("Timeout lors de l'appel à BambooPay")
             return {
                 "success": False,
                 "error": "Timeout lors de la connexion à BambooPay",
                 "code": 408
             }
         except Exception as e:
-            logger.error(f"❌ Exception lors de l'appel BambooPay: {str(e)}", exc_info=True)
+            logger.error(f"Exception lors de l'appel BambooPay: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "error": f"Erreur lors de l'appel à BambooPay: {str(e)}",
@@ -209,7 +209,7 @@ class BambooPayService:
         url = f"{self.base_url}/check-status/{transaction_id}"
         
         if self.debug_mode:
-            logger.info(f"🌐 Appel BambooPay /check-status: {url}")
+            logger.info(f"Appel BambooPay /check-status: {url}")
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -222,7 +222,7 @@ class BambooPayService:
                     data = response.json()
                     transaction = data.get("transaction", {})
                     if self.debug_mode:
-                        logger.info(f"✅ Statut transaction {transaction_id}: {transaction.get('status', 'N/A')}")
+                        logger.info(f"Statut transaction {transaction_id}: {transaction.get('status', 'N/A')}")
                     return {
                         "success": True,
                         "status": transaction.get("status"),
@@ -237,7 +237,7 @@ class BambooPayService:
                     except:
                         error_data = {"message": response.text}
                     
-                    logger.error(f"❌ Erreur BambooPay /check-status ({response.status_code}): {error_data}")
+                    logger.error(f"Erreur BambooPay /check-status ({response.status_code}): {error_data}")
                     return {
                         "success": False,
                         "error": error_data.get("message", f"Erreur {response.status_code}"),
@@ -245,14 +245,14 @@ class BambooPayService:
                         "data": error_data
                     }
         except httpx.TimeoutException:
-            logger.error("⏱️ Timeout lors de la vérification du statut")
+            logger.error("Timeout lors de la vérification du statut")
             return {
                 "success": False,
                 "error": "Timeout lors de la connexion à BambooPay",
                 "code": 408
             }
         except Exception as e:
-            logger.error(f"❌ Exception lors de la vérification du statut: {str(e)}", exc_info=True)
+            logger.error(f"Exception lors de la vérification du statut: {str(e)}", exc_info=True)
             return {
                 "success": False,
                 "error": f"Erreur lors de la vérification: {str(e)}",

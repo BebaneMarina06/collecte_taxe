@@ -143,13 +143,13 @@ async def startup_event():
         )
         
         scheduler.start()
-        print("✅ Scheduler CRON configuré pour la génération mensuelle des dettes")
-        
+        print("Scheduler CRON configuré pour la génération mensuelle des dettes")
+
     except ImportError:
-        print("⚠️ APScheduler non installé. Les tâches CRON ne seront pas automatiques.")
+        print("APScheduler non installé. Les tâches CRON ne seront pas automatiques.")
         print("   Installez avec: pip install apscheduler")
     except Exception as e:
-        print(f"⚠️ Erreur lors de la configuration du scheduler: {str(e)}")
+        print(f"Erreur lors de la configuration du scheduler: {str(e)}")
 
 
 @app.get("/")

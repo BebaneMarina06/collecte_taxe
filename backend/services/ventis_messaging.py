@@ -40,7 +40,7 @@ class VentisMessagingService:
         
         # Avertir si le client_secret n'est pas configuré
         if not self.client_secret:
-            logger.warning("⚠️ KEYCLOAK_MESSAGING_CLIENT_SECRET n'est pas configuré dans le fichier .env")
+            logger.warning("KEYCLOAK_MESSAGING_CLIENT_SECRET n'est pas configuré dans le fichier .env")
             logger.warning("   Cela peut causer des erreurs d'authentification si Keycloak l'exige.")
             logger.warning("   Ajoutez KEYCLOAK_MESSAGING_CLIENT_SECRET=votre-secret dans votre fichier .env")
         
@@ -129,7 +129,7 @@ class VentisMessagingService:
                     
                     # Si c'est un problème de client_secret, donner un message plus clair
                     if "client secret" in error_desc.lower():
-                        logger.error("❌ Le client_secret est requis mais n'est pas configuré")
+                        logger.error("Le client_secret est requis mais n'est pas configuré")
                         logger.error("   Vérifiez votre fichier .env et ajoutez KEYCLOAK_MESSAGING_CLIENT_SECRET")
                         logger.error("   Ou contactez l'administrateur Keycloak pour obtenir le secret")
                     return None

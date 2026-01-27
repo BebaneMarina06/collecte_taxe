@@ -320,13 +320,13 @@ def get_uncovered_zones(
                     uncovered_zones.append(zone_dict)
             except Exception as e:
                 # Si erreur avec cette zone, on la saute et on continue
-                print(f"⚠️ Erreur traitement zone {getattr(zone, 'id', 'Unknown')}: {e}")
+                print(f"Erreur traitement zone {getattr(zone, 'id', 'Unknown')}: {e}")
                 continue
-        
+
         return uncovered_zones
     except Exception as e:
         # En cas d'erreur générale, retourner une liste vide plutôt que d'échouer
-        print(f"⚠️ Erreur get_uncovered_zones: {e}")
+        print(f"Erreur get_uncovered_zones: {e}")
         import traceback
         traceback.print_exc()
         return []

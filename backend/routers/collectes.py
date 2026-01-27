@@ -120,7 +120,7 @@ def get_contribuable_taxes(contribuable_id: int, db: Session = Depends(get_db)):
     if not contribuable:
         raise HTTPException(status_code=404, detail="Contribuable non trouvé")
 
-    print(f"🔍 Recherche taxes pour contribuable ID: {contribuable_id}")
+    print(f"Recherche taxes pour contribuable ID: {contribuable_id}")
 
     # Récupérer les affectations de taxes actives
     from sqlalchemy import or_
@@ -171,7 +171,7 @@ def get_contribuable_taxes(contribuable_id: int, db: Session = Depends(get_db)):
         else:
             print(f"   ✗ Affectation {affectation.id}: pas de taxe associée")
 
-    print(f"✅ Retour de {len(taxes_disponibles)} taxes disponibles")
+    print(f"Retour de {len(taxes_disponibles)} taxes disponibles")
 
     return {
         "success": True,
