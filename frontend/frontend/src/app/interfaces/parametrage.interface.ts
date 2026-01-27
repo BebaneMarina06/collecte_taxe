@@ -124,3 +124,27 @@ export interface SecteurActiviteCreate {
   actif?: boolean;
 }
 
+// ==================== SERVICES MUNICIPAUX ====================
+export interface ServiceMunicipal {
+  id: number;
+  nom: string;
+  code: string;
+  description?: string;
+  responsable?: string;
+  telephone?: string;
+  email?: string;
+  actif: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ServiceMunicipalCreate {
+  nom: string;
+  code: string;
+  description?: string;
+  responsable?: string;
+  telephone?: string;
+  email?: string;
+  actif?: boolean;
+}
+

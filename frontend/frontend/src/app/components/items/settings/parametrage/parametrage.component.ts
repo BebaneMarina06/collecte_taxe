@@ -5,6 +5,7 @@ import { ApiService } from '../../../../services/api.service';
 import { GestionRolesComponent } from './gestion-roles/gestion-roles.component';
 import { GestionDivisionsComponent } from './gestion-divisions/gestion-divisions.component';
 import { GestionSecteursComponent } from './gestion-secteurs/gestion-secteurs.component';
+import { GestionServicesComponent } from './gestion-services/gestion-services.component';
 
 @Component({
   selector: 'app-parametrage',
@@ -14,7 +15,8 @@ import { GestionSecteursComponent } from './gestion-secteurs/gestion-secteurs.co
     FormsModule,
     GestionRolesComponent,
     GestionDivisionsComponent,
-    GestionSecteursComponent
+    GestionSecteursComponent,
+    GestionServicesComponent
   ],
   templateUrl: './parametrage.component.html',
   styleUrl: './parametrage.component.scss'

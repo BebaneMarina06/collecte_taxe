@@ -14,6 +14,7 @@ from datetime import datetime
 from sqlalchemy import text
 from auth.security import get_current_active_user
 from services.qr_code_service import generate_qr_code_string, generate_qr_code_image, generate_qr_code_with_info
+from pydantic import BaseModel
 
 router = APIRouter(
     prefix="/api/contribuables",
@@ -497,6 +498,76 @@ def download_qr_code(
             "Content-Disposition": f'attachment; filename="{filename}"'
         }
     )
+
+
+class AssignTaxesRequest(BaseModel):
+    """Schéma pour assigner des taxes à un contribuable"""
+    taxe_ids: List[int]
+
+
+@router.post("/{contribuable_id}/assign-taxes")
+def assign_taxes_to_contribuable(
+    contribuable_id: int,
+    request: AssignTaxesRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Assigne une ou plusieurs taxes à un contribuable existant.
+    Crée des affectations de taxes (AffectationTaxe) pour chaque taxe fournie.
+    """
+    from database.models import AffectationTaxe, Taxe
+
+    # Vérifier que le contribuable existe
+    contribuable = db.query(Contribuable).filter(Contribuable.id == contribuable_id).first()
+    if not contribuable:
+        raise HTTPException(status_code=404, detail="Contribuable non trouvé")
+
+    if not request.taxe_ids or len(request.taxe_ids) == 0:
+        raise HTTPException(status_code=400, detail="Aucune taxe fournie")
+
+    taxes_ajoutees = []
+    taxes_existantes = []
+    taxes_invalides = []
+
+    for taxe_id in request.taxe_ids:
+        # Vérifier que la taxe existe et est active
+        taxe = db.query(Taxe).filter(Taxe.id == taxe_id, Taxe.actif == True).first()
+        if not taxe:
+            taxes_invalides.append(taxe_id)
+            continue
+
+        # Vérifier si l'affectation existe déjà (active)
+        existing = db.query(AffectationTaxe).filter(
+            AffectationTaxe.contribuable_id == contribuable_id,
+            AffectationTaxe.taxe_id == taxe_id,
+            AffectationTaxe.actif == True
+        ).first()
+
+        if existing:
+            taxes_existantes.append(taxe.nom)
+            continue
+
+        # Créer l'affectation
+        affectation = AffectationTaxe(
+            contribuable_id=contribuable_id,
+            taxe_id=taxe_id,
+            date_debut=datetime.utcnow(),
+            date_fin=None,
+            montant_custom=None,
+            actif=True
+        )
+        db.add(affectation)
+        taxes_ajoutees.append(taxe.nom)
+
+    db.commit()
+
+    return {
+        "message": "Taxes assignées avec succès",
+        "contribuable_id": contribuable_id,
+        "taxes_ajoutees": taxes_ajoutees,
+        "taxes_existantes": taxes_existantes,
+        "taxes_invalides": taxes_invalides
+    }
 
 
 @router.get("/{contribuable_id}/taxations")

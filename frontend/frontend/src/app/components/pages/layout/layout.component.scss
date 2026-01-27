@@ -1,48 +1,33 @@
-/* Layout optimisé - Espacement professionnel compact */
-:host {
-  display: block;
-  min-height: 100vh;
-  background-color: #f8fafc;
-  margin: 0;
-  padding: 0;
+/* Layout définitif - Corrigé pour éviter le scroll sous la topbar */
+
+.app-container {
+  background-color: #f9fafb;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  position: relative;
 }
 
-.main-layout {
-  margin-left: 280px;
-  min-height: 100vh;
+.main-content {
+  position: absolute;
+  top: 48px;
+  left: 280px;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
   display: flex;
   flex-direction: column;
+}
 
-  app-topbar {
-    display: block;
-    position: fixed;
-    top: 0;
-    left: 280px;
-    right: 0;
-    z-index: 40;
-    height: 48px;
-    margin: 0;
-    padding: 0;
-  }
-
-  main {
-    flex: 1;
-    padding: 48px 0 0 0;
-    margin: 0;
-    min-height: calc(100vh - 48px);
-
-    > * {
-      margin: 0 !important;
-    }
-  }
+main {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  overflow-x: hidden;
 }
 
 @media (max-width: 1024px) {
-  .main-layout {
-    margin-left: 0;
-
-    app-topbar {
-      left: 0;
-    }
+  .main-content {
+    left: 0;
   }
 }

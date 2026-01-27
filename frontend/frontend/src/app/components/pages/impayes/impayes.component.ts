@@ -1,7 +1,7 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ApiService } from '../../../services/api.service';
+import { ImpayesAdaptiveService, ImpayeUnifie, ListeResponse } from '../../../services/impayes.service';
 
 @Component({
   selector: 'app-impayes',
@@ -11,91 +11,80 @@ import { ApiService } from '../../../services/api.service';
   styleUrl: './impayes.component.scss'
 })
 export class ImpayesComponent implements OnInit {
-  private apiService = inject(ApiService);
+  private impayesService = inject(ImpayesAdaptiveService);
 
-  impayes: any[] = [];
+  Math = Math;
+  
+  impayes: ImpayeUnifie[] = [];
   loading = false;
   error = '';
   
-  // Filtres
   filters = {
     contribuable_id: null as number | null,
-    collecteur_id: null as number | null,
-    statut: '',
-    priorite: '',
-    jours_retard_min: null as number | null
+    taxe_id: null as number | null,
+    statut: null as string | null,
+    zone_nom: null as string | null,
+    quartier_nom: null as string | null
   };
 
-  // Pagination
   currentPage = 0;
   pageSize = 20;
   total = 0;
 
-  // Statistiques
   stats: any = null;
-
-  // Collecteurs pour assignation
-  collecteurs: any[] = [];
+  zones: string[] = [];
+  quartiers: string[] = [];
+  
+  statutOptions = ['PAYE', 'PARTIEL', 'IMPAYE', 'RETARD'];
 
   ngOnInit(): void {
+    console.log('[ImpayesComponent] Initialisation');
     this.loadImpayes();
-    this.loadStats();
-    this.loadCollecteurs();
   }
 
   loadImpayes(): void {
     this.loading = true;
     this.error = '';
 
-    const params: any = {
+    const filtres = {
       skip: this.currentPage * this.pageSize,
-      limit: this.pageSize
+      limit: this.pageSize,
+      ...this.filters
     };
 
-    if (this.filters.contribuable_id) params.contribuable_id = this.filters.contribuable_id;
-    if (this.filters.collecteur_id) params.collecteur_id = this.filters.collecteur_id;
-    if (this.filters.statut) params.statut = this.filters.statut;
-    if (this.filters.priorite) params.priorite = this.filters.priorite;
-    if (this.filters.jours_retard_min) params.jours_retard_min = this.filters.jours_retard_min;
+    console.log('[ImpayesComponent] Chargement avec filtres:', filtres);
 
-    this.apiService.getImpayes(params).subscribe({
-      next: (response) => {
-        if (response.items) {
-          this.impayes = response.items;
-          this.total = response.total;
-        } else {
-          this.impayes = response;
-          this.total = response.length;
-        }
+    this.impayesService.getImpayes(filtres).subscribe({
+      next: (response: ListeResponse) => {
+        console.log('[ImpayesComponent] Données reçues:', response);
+        console.log('[ImpayesComponent] Nombre d\'items:', response.items?.length);
+        
+        this.impayes = response.items || [];
+        this.total = response.total || 0;
         this.loading = false;
+        
+        this.extractZonesAndQuartiers();
+        
+        console.log('[ImpayesComponent] État final:', {
+          total: this.total,
+          itemsCount: this.impayes.length,
+          premiersItems: this.impayes.slice(0, 3)
+        });
       },
-      error: (err) => {
-        this.error = err.error?.detail || 'Erreur lors du chargement des impayés';
+      error: (err: any) => {
+        console.error('[ImpayesComponent] Erreur:', err);
+        this.error = err.error?.detail || err.message || 'Erreur lors du chargement des impayés';
         this.loading = false;
       }
     });
   }
 
-  loadStats(): void {
-    this.apiService.getStatistiquesImpayes().subscribe({
-      next: (data) => {
-        this.stats = data;
-      },
-      error: (err) => {
-        console.error('Erreur chargement stats:', err);
-      }
-    });
-  }
+  extractZonesAndQuartiers(): void {
+    const zonesSet = new Set(this.impayes.map(i => i.zone_nom).filter(Boolean));
+    this.zones = Array.from(zonesSet).sort();
 
-  loadCollecteurs(): void {
-    this.apiService.getCollecteurs({ actif: true, limit: 1000 }).subscribe({
-      next: (data) => {
-        this.collecteurs = data;
-      },
-      error: (err) => {
-        console.error('Erreur chargement collecteurs:', err);
-      }
-    });
+    const quartiersSet = new Set(this.impayes.map(i => i.quartier_nom).filter(Boolean));
+    this.quartiers = Array.from(quartiersSet).sort();
   }
 
   applyFilters(): void {
@@ -106,67 +95,12 @@ export class ImpayesComponent implements OnInit {
   resetFilters(): void {
     this.filters = {
       contribuable_id: null,
-      collecteur_id: null,
-      statut: '',
-      priorite: '',
-      jours_retard_min: null
+      taxe_id: null,
+      statut: null,
+      zone_nom: null,
+      quartier_nom: null
     };
     this.applyFilters();
-  }
-
-  detecterImpayes(): void {
-    if (!confirm('Voulez-vous détecter automatiquement les nouveaux impayés ?')) {
-      return;
-    }
-
-    this.loading = true;
-    this.apiService.detecterImpayes({
-      jours_retard_min: 7,
-      taux_penalite: 0.5
-    }).subscribe({
-      next: (dossiers) => {
-        alert(`${dossiers.length} dossier(s) d'impayé(s) détecté(s) avec succès`);
-        this.loadImpayes();
-        this.loadStats();
-        this.loading = false;
-      },
-      error: (err) => {
-        this.error = err.error?.detail || 'Erreur lors de la détection des impayés';
-        this.loading = false;
-      }
-    });
-  }
-
-  assignerDossier(dossierId: number, collecteurId: number): void {
-    if (!confirm('Assigner ce dossier au collecteur sélectionné ?')) {
-      return;
-    }
-
-    this.apiService.assignerDossier(dossierId, collecteurId).subscribe({
-      next: () => {
-        this.loadImpayes();
-        this.loadStats();
-      },
-      error: (err) => {
-        this.error = err.error?.detail || 'Erreur lors de l\'assignation';
-      }
-    });
-  }
-
-  cloturerDossier(id: number): void {
-    if (!confirm('Clôturer ce dossier d\'impayé ?')) {
-      return;
-    }
-
-    this.apiService.cloturerDossier(id).subscribe({
-      next: () => {
-        this.loadImpayes();
-        this.loadStats();
-      },
-      error: (err) => {
-        this.error = err.error?.detail || 'Erreur lors de la clôture';
-      }
-    });
   }
 
   onPageChange(page: number): void {
@@ -180,22 +114,117 @@ export class ImpayesComponent implements OnInit {
 
   getStatutClass(statut: string): string {
     const classes: { [key: string]: string } = {
-      'en_cours': 'bg-yellow-100 text-yellow-800',
-      'partiellement_paye': 'bg-orange-100 text-orange-800',
-      'paye': 'bg-green-100 text-green-800',
-      'archive': 'bg-gray-100 text-gray-800'
+      'PAYE': 'bg-white text-green-700 border-green-400',
+      'PARTIEL': 'bg-white text-blue-700 border-blue-400',
+      'IMPAYE': 'bg-white text-gray-700 border-gray-400',
+      'RETARD': 'bg-white text-red-700 border-red-400'
     };
-    return classes[statut] || 'bg-gray-100 text-gray-800';
+    return classes[statut] || 'bg-white text-gray-700 border-gray-300';
   }
 
-  getPrioriteClass(priorite: string): string {
-    const classes: { [key: string]: string } = {
-      'urgente': 'bg-red-100 text-red-800',
-      'elevee': 'bg-orange-100 text-orange-800',
-      'normale': 'bg-yellow-100 text-yellow-800',
-      'faible': 'bg-green-100 text-green-800'
+  getStatutLabel(statut: string): string {
+    const labels: { [key: string]: string } = {
+      'PAYE': 'Payé',
+      'PARTIEL': 'Partiel',
+      'IMPAYE': 'Impayé',
+      'RETARD': 'En retard'
     };
-    return classes[priorite] || 'bg-gray-100 text-gray-800';
+    return labels[statut] || statut;
+  }
+
+  getRetardClass(joursRetard: number): string {
+    if (joursRetard === 0) return '';
+    if (joursRetard > 90) return 'text-red-700 font-bold';
+    if (joursRetard > 60) return 'text-red-600 font-semibold';
+    if (joursRetard > 30) return 'text-orange-600';
+    return 'text-yellow-600';
+  }
+
+  exportToCSV(): void {
+    if (this.impayes.length === 0) {
+      alert('Aucune donnée à exporter');
+      return;
+    }
+
+    const headers = [
+      'Contribuable',
+      'Téléphone',
+      'Zone',
+      'Quartier',
+      'Taxe',
+      'Code Taxe',
+      'Montant Attendu',
+      'Montant Payé',
+      'Montant Restant',
+      '% Payé',
+      'Statut',
+      'Date Échéance',
+      'Jours Retard',
+      'Collecteur'
+    ];
+
+    const rows = this.impayes.map(impaye => [
+      `${impaye.contribuable_nom} ${impaye.contribuable_prenom}`,
+      impaye.contribuable_telephone || '',
+      impaye.zone_nom || '',
+      impaye.quartier_nom || '',
+      impaye.taxe_nom,
+      impaye.taxe_code || '',
+      impaye.montant_attendu,
+      impaye.montant_paye,
+      impaye.montant_restant,
+      impaye.pourcentage_paye.toFixed(1),
+      impaye.statut,
+      impaye.date_echeance,
+      impaye.jours_retard,
+      impaye.collecteur_nom && impaye.collecteur_prenom 
+        ? `${impaye.collecteur_nom} ${impaye.collecteur_prenom}` 
+        : 'Non assigné'
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    
+    link.setAttribute('href', url);
+    link.setAttribute('download', `impayes_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+
+  voirDetailsContribuable(contribuableId: number): void {
+    console.log('Voir détails du contribuable:', contribuableId);
+    // TODO: Implémenter
+  }
+
+  formatMontant(montant: number): string {
+    if (montant === null || montant === undefined) {
+      return '0';
+    }
+    return new Intl.NumberFormat('fr-FR', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(montant);
+  }
+
+  formatDate(dateStr: string): string {
+    if (!dateStr) return 'N/A';
+    const date = new Date(dateStr);
+    return new Intl.DateTimeFormat('fr-FR').format(date);
+  }
+
+  formatPourcentage(valeur: number): string {
+    if (valeur === null || valeur === undefined) {
+      return '0%';
+    }
+    return `${valeur.toFixed(1)}%`;
   }
 }
-

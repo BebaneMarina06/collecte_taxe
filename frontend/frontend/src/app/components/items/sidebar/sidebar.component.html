@@ -10,8 +10,8 @@
       <ul class="sidebar-menu" role="list">
         
         <!-- Dashboard -->
-        <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-          <a routerLink="/" routerLinkActive="active" [routerLinkActiveOptions]="{exact: true}" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+        <li class="mx-3">
+          <a routerLink="/" routerLinkActive="bg-blue-500 text-white" [routerLinkActiveOptions]="{exact: true}" class="group flex gap-x-3 rounded-lg items-center text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50">
             <svg class="size-4 shrink-0" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24">
               <path fill="currentColor" d="M13 9V3h8v6zM3 13V3h8v10zm10 8V11h8v10zM3 21v-6h8v6z"/>
             </svg>
@@ -24,18 +24,18 @@
           <details>
             <summary>Pilotage</summary>
             <ul>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/rapports" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/rapports" routerLinkActive="active" class="group flex gap-x-3 rounded-lg items-center text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Rapports & statistiques
                 </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/travaux" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/travaux" routerLinkActive="active" class="group flex gap-x-3 rounded-lg items-center text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Travaux du jour
                 </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/cartographie" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/cartographie" routerLinkActive="active" class="group flex gap-x-3 rounded-lg items-center text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Cartographie
                 </a>
               </li>
@@ -48,46 +48,40 @@
           <details>
             <summary>Collecteurs & terrain</summary>
             <ul>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/clients" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/clients" routerLinkActive="active" class="group flex gap-x-3 rounded-lg items-center text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Gestion des contribuables
                 </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/collecteurs" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/collecteurs" routerLinkActive="active" class="group flex gap-x-3 rounded-lg items-center text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Gestion des collecteurs
                 </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/relances" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/relances" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-lg text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Relances
                 </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/impayes" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/impayes" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-lg text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Impayés
                 </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/demandes-citoyens" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/demandes-citoyens" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-lg text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                 Demandes citoyens
               </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/transactions" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
-          
+              <li class="mx-3">
+              <a routerLink="/transactions" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-lg text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                 Collectes & historiques
               </a>
               </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/etat-collecteurs" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/etat-collecteurs" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-lg text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   État des collecteurs
                 </a>
-              </li>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/commissions" routerLinkActive="active" class="group flex gap-x-3 items-center rounded-md text-sm/6 font-semibold">
-                Fichiers commissions
-              </a>
               </li>
             </ul>
           </details>
@@ -98,8 +92,8 @@
           <details>
             <summary>Référentiels</summary>
             <ul>
-              <li class="[&.active]:bg-main hover:bg-gray-50 px-6 rounded-lg py-3 mx-3 [&.active]:text-secondary">
-              <a routerLink="/taxes" routerLinkActive="active" class="group flex gap-x-3 rounded-md items-center text-sm/6 font-semibold">
+              <li class="mx-3">
+              <a routerLink="/taxes" routerLinkActive="active" class="group flex gap-x-3 rounded-lg items-center text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 [&.active]:bg-blue-500 [&.active]:text-white">
                   Gestion des taxes
                 </a>
             </li>
@@ -111,8 +105,8 @@
         <!-- Footer sidebar -->
         <li class="mt-auto sidebar-footer">
           <ul class="pt-5 border-t flex flex-col gap-3">
-           <li class="[&.active]:bg-main [&.active]:text-secondary px-6 rounded-2xl py-3 mx-3 hover:bg-gray-50 hover:text-main">
-            <a routerLink="/settings" routerLinkActive="active" class="group -mx-2 flex gap-x-3 rounded-md text-sm/6 font-semibold">
+           <li class="mx-3">
+            <a routerLink="/settings" routerLinkActive="active" class="group flex gap-x-3 rounded-2xl text-sm/6 font-semibold px-6 py-3 hover:bg-gray-50 hover:text-main [&.active]:bg-blue-500 [&.active]:text-white">
                 Paramétrage
               </a>
             </li>

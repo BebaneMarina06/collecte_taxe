@@ -576,6 +576,28 @@ export class ApiService {
     return this.http.delete(`${this.apiUrl}/parametrage/secteurs-activite/${id}`);
   }
 
+  // ==================== SERVICES MUNICIPAUX ====================
+  getServicesMunicipaux(params?: any): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/parametrage/services-municipaux`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getServiceMunicipal(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/parametrage/services-municipaux/${id}`);
+  }
+
+  createServiceMunicipal(service: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/parametrage/services-municipaux`, service);
+  }
+
+  updateServiceMunicipal(id: number, service: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/parametrage/services-municipaux/${id}`, service);
+  }
+
+  deleteServiceMunicipal(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/parametrage/services-municipaux/${id}`);
+  }
+
   // ==================== RAPPORTS ====================
   
   getStatistiquesGenerales(params?: any): Observable<any> {

@@ -24,12 +24,12 @@
         </div>
 
         <div *ngIf="modeFiltre === 'jour'" class="flex gap-2">
-          <input type="date" [(ngModel)]="dateSpecifique" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
+          <input type="date" [(ngModel)]="dateSpecifique" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
 
         <div *ngIf="modeFiltre === 'plage'" class="flex gap-2">
-          <input type="date" [(ngModel)]="dateDebut" placeholder="Date début" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
-          <input type="date" [(ngModel)]="dateFin" placeholder="Date fin" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" />
+          <input type="date" [(ngModel)]="dateDebut" placeholder="Date début" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
+          <input type="date" [(ngModel)]="dateFin" placeholder="Date fin" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
         </div>
       </div>
 
@@ -37,7 +37,7 @@
         <button (click)="reinitialiserFiltres()" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
           Réinitialiser
         </button>
-        <button (click)="chargerEtats()" class="px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold transition-colors">
+        <button (click)="chargerEtats()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">
           Charger
         </button>
         <button (click)="exporterCSV()" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
@@ -50,7 +50,7 @@
     <div class="rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
       <div class="overflow-x-auto">
         <table class="min-w-full text-sm text-gray-600">
-          <thead class="bg-gradient-to-r from-emerald-500 to-teal-600 text-white">
+          <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
             <tr class="text-xs font-semibold uppercase tracking-wider">
               <th class="px-6 py-4 text-left">Collecteur</th>
               <th class="px-6 py-4 text-left">Date</th>
@@ -65,7 +65,7 @@
             <tr *ngIf="loading">
               <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                 <div class="flex items-center justify-center gap-3">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-emerald-600"></div>
+                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
                   <span>Chargement...</span>
                 </div>
               </td>
@@ -76,7 +76,7 @@
               </td>
             </tr>
             <ng-container *ngFor="let etat of paginerDonnees(); let i = index; trackBy: trackByIndex">
-              <tr class="hover:bg-emerald-50 transition-colors">
+              <tr class="hover:bg-blue-50 transition-colors">
                 <td class="px-6 py-4">
                   <p class="font-semibold text-gray-900">{{ etat.nom_collecteur }}</p>
                 </td>
@@ -86,10 +86,10 @@
                 <td class="px-6 py-4 text-right font-semibold text-orange-600">
                   {{ formatMontant(etat.montant_cash) }}
                 </td>
-                <td class="px-6 py-4 text-right font-semibold text-teal-600">
+                <td class="px-6 py-4 text-right font-semibold text-sky-600">
                   {{ formatMontant(etat.montant_numerique) }}
                 </td>
-                <td class="px-6 py-4 text-right font-bold text-emerald-700 text-base">
+                <td class="px-6 py-4 text-right font-bold text-blue-700 text-base">
                   {{ formatMontant(etat.montant_total) }}
                 </td>
                 <td class="px-6 py-4 text-center">
@@ -101,11 +101,11 @@
                   <button
                     (click)="afficherContribuables(etat)"
                     class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                    [class.bg-emerald-100]="etat.showDetails"
-                    [class.text-emerald-700]="etat.showDetails"
+                    [class.bg-blue-100]="etat.showDetails"
+                    [class.text-blue-700]="etat.showDetails"
                     [class.bg-gray-100]="!etat.showDetails"
                     [class.text-gray-700]="!etat.showDetails"
-                    [class.hover:bg-emerald-200]="etat.showDetails"
+                    [class.hover:bg-blue-200]="etat.showDetails"
                     [class.hover:bg-gray-200]="!etat.showDetails">
                     {{ etat.showDetails ? 'Masquer' : 'Voir détails' }}
                   </button>
@@ -120,11 +120,11 @@
                     </h4>
                     <ul class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
                       <li *ngFor="let contrib of etat.contribuables"
-                          class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-emerald-400 transition-colors">
+                          class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 transition-colors">
                         <div class="text-sm font-medium text-gray-900">
                           {{ contrib.prenom }} {{ contrib.nom }}
                         </div>
-                        <div class="text-sm text-emerald-600 font-semibold">
+                        <div class="text-sm text-blue-600 font-semibold">
                           {{ formatMontant(contrib.montant) }} F
                         </div>
                       </li>
@@ -151,7 +151,7 @@
           Précédent
         </button>
         <span class="text-sm font-medium text-gray-700">
-          Page <span class="font-bold text-emerald-600">{{ currentPage }}</span> / {{ totalPages }}
+          Page <span class="font-bold text-blue-600">{{ currentPage }}</span> / {{ totalPages }}
         </span>
         <button
           (click)="allerPage(currentPage + 1)"

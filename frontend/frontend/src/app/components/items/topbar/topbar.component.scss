@@ -1,7 +1,8 @@
+/* Topbar fixed - Version originale */
 .top-bar {
   position: fixed;
   top: 0;
-  left: 280px; // Largeur de la sidebar
+  left: 280px;
   right: 0;
   z-index: 40;
   height: 48px;
@@ -16,14 +17,12 @@
   align-items: center;
 }
 
-// Sur mobile, adapter la topbar
 @media (max-width: 1024px) {
   .top-bar {
-    left: 0; // Prend toute la largeur sur mobile
+    left: 0;
   }
 }
 
-// Style pour le composant host
 :host {
   display: block;
   margin: 0;
