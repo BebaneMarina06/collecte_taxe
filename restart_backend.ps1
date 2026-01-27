@@ -1,2 +1,0 @@
-docker compose restart backend
-

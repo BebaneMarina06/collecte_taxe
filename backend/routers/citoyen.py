@@ -42,8 +42,10 @@ def login_citoyen(
     """
     Authentification d'un citoyen (contribuable) par téléphone et mot de passe
     """
-    # Chercher le contribuable par téléphone
-    contribuable = db.query(Contribuable).filter(
+    # Chercher le contribuable par téléphone avec son type
+    contribuable = db.query(Contribuable).options(
+        joinedload(Contribuable.type_contribuable)
+    ).filter(
         Contribuable.telephone == login_data.telephone
     ).first()
     
@@ -92,7 +94,12 @@ def login_citoyen(
             "telephone": contribuable.telephone,
             "email": contribuable.email,
             "adresse": contribuable.adresse,
-            "matricule": contribuable.matricule
+            "matricule": contribuable.matricule,
+            "type_contribuable": {
+                "id": contribuable.type_contribuable.id,
+                "nom": contribuable.type_contribuable.nom,
+                "code": contribuable.type_contribuable.code
+            } if contribuable.type_contribuable else None
         }
     }
 
@@ -105,8 +112,10 @@ def login_citoyen_email(
     """
     Authentification d'un citoyen par email et mot de passe
     """
-    # Chercher le contribuable par email
-    contribuable = db.query(Contribuable).filter(
+    # Chercher le contribuable par email avec son type
+    contribuable = db.query(Contribuable).options(
+        joinedload(Contribuable.type_contribuable)
+    ).filter(
         Contribuable.email == login_data.email
     ).first()
     
@@ -155,7 +164,12 @@ def login_citoyen_email(
             "telephone": contribuable.telephone,
             "email": contribuable.email,
             "adresse": contribuable.adresse,
-            "matricule": contribuable.matricule
+            "matricule": contribuable.matricule,
+            "type_contribuable": {
+                "id": contribuable.type_contribuable.id,
+                "nom": contribuable.type_contribuable.nom,
+                "code": contribuable.type_contribuable.code
+            } if contribuable.type_contribuable else None
         }
     }
 
@@ -243,7 +257,9 @@ def verify_otp(payload: OtpVerify, db: Session = Depends(get_db)):
     """
     Vérifie un OTP et retourne un JWT pour le portail citoyen.
     """
-    contribuable = db.query(Contribuable).filter(
+    contribuable = db.query(Contribuable).options(
+        joinedload(Contribuable.type_contribuable)
+    ).filter(
         Contribuable.email == payload.email,
         Contribuable.actif == True
     ).first()
@@ -285,7 +301,12 @@ def verify_otp(payload: OtpVerify, db: Session = Depends(get_db)):
             "telephone": contribuable.telephone,
             "email": contribuable.email,
             "adresse": contribuable.adresse,
-            "matricule": contribuable.matricule
+            "matricule": contribuable.matricule,
+            "type_contribuable": {
+                "id": contribuable.type_contribuable.id,
+                "nom": contribuable.type_contribuable.nom,
+                "code": contribuable.type_contribuable.code
+            } if contribuable.type_contribuable else None
         }
     }
 
