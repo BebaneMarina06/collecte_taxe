@@ -18,7 +18,6 @@ from datetime import datetime
 from auth.security import get_current_user_or_citoyen
 
 router = APIRouter(
-    prefix="/api/demandes",
     tags=["demandes-citoyens"],
     dependencies=[Depends(get_current_user_or_citoyen)],
 )
