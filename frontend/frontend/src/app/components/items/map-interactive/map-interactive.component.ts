@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy, AfterViewInit, OnChanges, SimpleChanges, inject, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewInit, OnChanges, SimpleChanges, inject, Input, Output, EventEmitter, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../services/api.service';
@@ -13,6 +13,7 @@ import * as L from 'leaflet';
 })
 export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy, OnChanges {
   private apiService: ApiService = inject(ApiService);
+  private cdr: ChangeDetectorRef = inject(ChangeDetectorRef);
   
   private map: L.Map | null = null;
   private payesLayer: L.LayerGroup | null = null;
@@ -148,6 +149,9 @@ export class MapInteractiveComponent implements OnInit, AfterViewInit, OnDestroy
     this.ticketMoyen = this.nombreCollectesTotal > 0
       ? this.montantCollecteTotal / this.nombreCollectesTotal
       : 0;
+
+    // Forcer la détection des changements pour éviter NG0100
+    this.cdr.detectChanges();
   }
 
   private updateMarkers(): void {
