@@ -1,12 +1,16 @@
 {
-  "name": "bamboo-pay-merchant",
-  "version": "0.0.0",
+  "name": "collecte-taxe-frontend",
+  "version": "1.0.0",
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
-    "build": "ng build",
+    "build": "ng build --configuration production",
+    "build:dev": "ng build --configuration development",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   },
   "private": true,
   "dependencies": {
