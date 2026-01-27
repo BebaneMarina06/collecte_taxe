@@ -10,14 +10,14 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import create_engine, text
-from database.database import SQLALCHEMY_DATABASE_URL
+from database.database import DATABASE_URL
 
 def run_migration():
     """Exécute la migration SQL"""
     print("🚀 Démarrage de la migration...")
 
     # Créer la connexion
-    engine = create_engine(SQLALCHEMY_DATABASE_URL)
+    engine = create_engine(DATABASE_URL)
 
     # Lire le fichier SQL
     migration_file = os.path.join(os.path.dirname(__file__), "create_collecte_location.sql")
