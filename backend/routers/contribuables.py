@@ -502,11 +502,13 @@ def download_qr_code(
 @router.get("/{contribuable_id}/taxations")
 def get_contribuable_taxations(contribuable_id: int, db: Session = Depends(get_db)):
     """
-    Récupère toutes les affectations de taxes d'un contribuable.
+    Récupère toutes les affectations de taxes d'un contribuable avec calculs des montants.
     Utilisé pour afficher et gérer les taxes assignées à un contribuable.
     """
     from sqlalchemy.orm import joinedload
-    from database.models import AffectationTaxe, Taxe
+    from database.models import AffectationTaxe, Taxe, InfoCollecte
+    from sqlalchemy import func, and_
+    from decimal import Decimal
 
     # Vérifier que le contribuable existe
     contribuable = db.query(Contribuable).filter(Contribuable.id == contribuable_id).first()
@@ -526,6 +528,32 @@ def get_contribuable_taxations(contribuable_id: int, db: Session = Depends(get_d
     for affectation in affectations:
         taxe = affectation.taxe
         if taxe:
+            # Calculer le montant attendu (montant_custom ou montant de la taxe)
+            montant_attendu = affectation.montant_custom or Decimal(taxe.montant)
+
+            # Calculer le montant payé (somme des collectes pour cette taxe)
+            collectes_sum = db.query(func.sum(InfoCollecte.montant)).filter(
+                and_(
+                    InfoCollecte.contribuable_id == contribuable_id,
+                    InfoCollecte.taxe_id == taxe.id
+                )
+            ).scalar()
+
+            montant_paye = Decimal(collectes_sum) if collectes_sum else Decimal("0.00")
+            montant_restant = montant_attendu - montant_paye
+
+            # Déterminer le statut
+            if montant_paye >= montant_attendu:
+                statut = "PAYE"
+            elif montant_paye > 0:
+                statut = "PARTIEL"
+            else:
+                statut = "IMPAYE"
+
+            # Vérifier si en retard (date_fin dépassée et non payée)
+            if affectation.date_fin and affectation.date_fin < datetime.utcnow() and montant_paye < montant_attendu:
+                statut = "RETARD"
+
             result.append({
                 "id": affectation.id,
                 "affectation_id": affectation.id,
@@ -534,6 +562,10 @@ def get_contribuable_taxations(contribuable_id: int, db: Session = Depends(get_d
                 "taxe_code": taxe.code,
                 "montant": float(taxe.montant),
                 "montant_custom": float(affectation.montant_custom) if affectation.montant_custom else None,
+                "montant_attendu": float(montant_attendu),
+                "montant_paye": float(montant_paye),
+                "montant_restant": float(montant_restant),
+                "statut": statut,
                 "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else str(taxe.periodicite),
                 "description": taxe.description or "",
                 "commission_pourcentage": float(taxe.commission_pourcentage),
