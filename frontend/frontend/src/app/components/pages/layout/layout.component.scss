@@ -1,23 +1,18 @@
-// Reset global
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
-
-// Container principal
+/* Layout optimisé - Espacement professionnel compact */
 :host {
   display: block;
   min-height: 100vh;
-  background-color: #f9fafb;
+  background-color: #f8fafc;
+  margin: 0;
+  padding: 0;
 }
 
-// Layout avec sidebar fixe
 .main-layout {
-  margin-left: 280px; // Largeur de la sidebar
+  margin-left: 280px;
   min-height: 100vh;
+  display: flex;
+  flex-direction: column;
 
-  // Topbar fixe en haut
   app-topbar {
     display: block;
     position: fixed;
@@ -25,35 +20,29 @@
     left: 280px;
     right: 0;
     z-index: 40;
+    height: 48px;
     margin: 0;
     padding: 0;
   }
 
-  // Contenu principal avec espace pour la topbar
   main {
-    padding-top: 52px; // Hauteur de la topbar (48px) + mini espacement (4px)
+    flex: 1;
+    padding: 48px 0 0 0;
     margin: 0;
-    padding-left: 0;
-    padding-right: 0;
+    min-height: calc(100vh - 48px);
 
-    // Forcer à supprimer les marges en haut pour éviter l'espace
     > * {
-      margin-top: 0 !important;
-      padding-top: 0 !important;
-    }
-
-    // Tous les app-contener ne doivent pas avoir de marge en haut
-    app-contener {
-      display: block;
-      margin-top: 0 !important;
-      padding-top: 0 !important;
+      margin: 0 !important;
     }
   }
 }
 
-// Sur mobile, masquer la sidebar et retirer la marge
 @media (max-width: 1024px) {
   .main-layout {
     margin-left: 0;
+
+    app-topbar {
+      left: 0;
+    }
   }
 }

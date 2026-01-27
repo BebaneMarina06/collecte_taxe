@@ -57,9 +57,7 @@ def get_collectes(
     """Récupère la liste des collectes avec filtres et relations"""
     from sqlalchemy.orm import joinedload
     from database.models import Contribuable
-    
-    from database.models import CollecteLocation
-    
+
     query = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),
         joinedload(InfoCollecte.taxe),
@@ -86,7 +84,7 @@ def get_collectes(
     if telephone:
         # Filtrer par téléphone du contribuable
         query = query.join(Contribuable).filter(Contribuable.telephone.ilike(f"%{telephone}%"))
-    
+
     collectes = query.order_by(InfoCollecte.date_collecte.desc()).offset(skip).limit(limit).all()
     return collectes
 
@@ -95,8 +93,6 @@ def get_collectes(
 def get_collecte(collecte_id: int, db: Session = Depends(get_db)):
     """Récupère une collecte par son ID avec toutes les relations"""
     from sqlalchemy.orm import joinedload
-
-    from database.models import CollecteLocation
 
     collecte = db.query(InfoCollecte).options(
         joinedload(InfoCollecte.contribuable),

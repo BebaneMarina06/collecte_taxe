@@ -30,12 +30,12 @@ def save_collecte_location(
     collecte = db.query(InfoCollecte).filter(InfoCollecte.id == collecte_id).first()
     if not collecte:
         raise HTTPException(status_code=404, detail="Collecte non trouvée")
-    
+
     # Créer ou mettre à jour la position
     existing_location = db.query(CollecteLocation).filter(
         CollecteLocation.collecte_id == collecte_id
     ).first()
-    
+
     if existing_location:
         # Mettre à jour
         existing_location.latitude = location_data.latitude
@@ -78,10 +78,10 @@ def get_collecte_location(
     location = db.query(CollecteLocation).filter(
         CollecteLocation.collecte_id == collecte_id
     ).first()
-    
+
     if not location:
         raise HTTPException(status_code=404, detail="Position non trouvée pour cette collecte")
-    
+
     return location
 
 

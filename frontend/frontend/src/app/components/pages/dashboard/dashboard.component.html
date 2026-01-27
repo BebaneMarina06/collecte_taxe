@@ -1,6 +1,6 @@
-<!-- Wrapper avec padding approprié -->
-<div class="px-4 sm:px-6 lg:px-8 pb-4" style="margin-top: 0 !important; padding-top: 0 !important;">
-  <div class="flex flex-col gap-4">
+<!-- Wrapper optimisé -->
+<div class="px-3 sm:px-4 lg:px-6 py-3" style="margin: 0 !important; padding-top: 12px !important;">
+  <div class="flex flex-col gap-3">
     <!-- Modals -->
     @if (active()) {
       <app-modal title="Créer un lien de paiement" [(active)]="active">
@@ -15,7 +15,7 @@
     }
 
     <!-- Cartes statistiques -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       <!-- Carte 1 - Total espéré -->
       <div class="stat-card bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow p-6 border border-gray-100">
         <div class="flex items-start justify-between">
