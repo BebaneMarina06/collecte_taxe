@@ -132,9 +132,9 @@
                   </div>
                 </td>
                 <td class="px-6 py-4">
-                  <span [ngClass]="getStatusClass(taxation.statut)" 
+                  <span [ngClass]="getStatusClass(taxation.statut)"
                         class="px-2.5 py-1 rounded-full text-xs font-semibold">
-                    {{ taxation.statut }}
+                    {{ getStatusLabel(taxation.statut) }}
                   </span>
                   @if (taxation.est_en_retard) {
                     <span class="ml-2 px-2 py-0.5 rounded-full bg-red-100 text-red-700 text-xs font-semibold">

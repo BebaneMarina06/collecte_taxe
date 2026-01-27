@@ -42,7 +42,8 @@ export class TaxationsContribuableComponent implements OnInit {
 
     this.apiService.getTaxationsContribuable(this.contribuable.id).subscribe({
       next: (response: any) => {
-        this.taxations = response.taxations || [];
+        // L'API retourne directement un array
+        this.taxations = Array.isArray(response) ? response : (response.taxations || []);
         this.loading = false;
       },
       error: (err) => {

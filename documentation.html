@@ -1,0 +1,1735 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Documentation - Collecte Taxe Municipale</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #06b6d4;
+            --bg-light: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --border: #e2e8f0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            line-height: 1.6;
+            color: var(--text-primary);
+            background: var(--bg-light);
+        }
+
+        /* Navigation */
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 280px;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+            color: white;
+            padding: 20px 0;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 20px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 20px;
+        }
+
+        .sidebar-header h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+
+        .sidebar-header p {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin-top: 5px;
+        }
+
+        .nav-section {
+            margin-bottom: 20px;
+        }
+
+        .nav-section-title {
+            padding: 10px 20px;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.6;
+        }
+
+        .nav-link {
+            display: block;
+            padding: 10px 20px;
+            color: white;
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            border-left: 3px solid transparent;
+        }
+
+        .nav-link:hover, .nav-link.active {
+            background: rgba(255,255,255,0.1);
+            border-left-color: white;
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 280px;
+            padding: 40px;
+            max-width: 1200px;
+        }
+
+        .page-header {
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-dark);
+            margin-bottom: 10px;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+        }
+
+        /* Sections */
+        section {
+            margin-bottom: 50px;
+        }
+
+        h2 {
+            color: var(--primary-dark);
+            font-size: 1.75rem;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--primary);
+        }
+
+        h3 {
+            color: var(--text-primary);
+            font-size: 1.25rem;
+            margin: 25px 0 15px;
+        }
+
+        h4 {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            margin: 20px 0 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+            color: var(--text-secondary);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            border: 1px solid var(--border);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-title .icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+
+        .card-title .icon.blue { background: #dbeafe; color: var(--primary); }
+        .card-title .icon.green { background: #d1fae5; color: var(--success); }
+        .card-title .icon.orange { background: #fef3c7; color: var(--warning); }
+        .card-title .icon.red { background: #fee2e2; color: var(--danger); }
+        .card-title .icon.cyan { background: #cffafe; color: var(--info); }
+
+        /* Formula Box */
+        .formula-box {
+            background: linear-gradient(135deg, #f0f9ff, #e0f2fe);
+            border: 1px solid #bae6fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin: 15px 0;
+            font-family: 'Consolas', 'Monaco', monospace;
+        }
+
+        .formula-box .formula {
+            font-size: 1.1rem;
+            color: var(--primary-dark);
+            font-weight: 600;
+            text-align: center;
+            margin: 10px 0;
+        }
+
+        .formula-box .description {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            margin-top: 15px;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+            font-size: 0.9rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--bg-light);
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        tr:hover {
+            background: var(--bg-light);
+        }
+
+        /* Code blocks */
+        .code-block {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.875rem;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        .code-block .keyword { color: #c084fc; }
+        .code-block .string { color: #86efac; }
+        .code-block .number { color: #fcd34d; }
+        .code-block .comment { color: #64748b; }
+
+        /* Status badges */
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge-success { background: #d1fae5; color: #065f46; }
+        .badge-warning { background: #fef3c7; color: #92400e; }
+        .badge-danger { background: #fee2e2; color: #991b1b; }
+        .badge-info { background: #dbeafe; color: #1e40af; }
+
+        /* Grid layout */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+        }
+
+        .grid-3 {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .grid-4 {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+        }
+
+        /* Stats cards */
+        .stat-card {
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-card .stat-label {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 5px;
+        }
+
+        /* Alert boxes */
+        .alert {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid;
+        }
+
+        .alert-info {
+            background: #eff6ff;
+            border-color: var(--primary);
+            color: #1e40af;
+        }
+
+        .alert-warning {
+            background: #fffbeb;
+            border-color: var(--warning);
+            color: #92400e;
+        }
+
+        .alert-success {
+            background: #f0fdf4;
+            border-color: var(--success);
+            color: #166534;
+        }
+
+        /* Feature list */
+        .feature-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 12px 0;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+
+        .feature-list .check {
+            width: 24px;
+            height: 24px;
+            background: var(--success);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-size: 0.75rem;
+        }
+
+        /* Workflow steps */
+        .workflow {
+            display: flex;
+            gap: 20px;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+
+        .workflow-step {
+            flex: 1;
+            min-width: 200px;
+            background: var(--bg-card);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            border: 1px solid var(--border);
+            position: relative;
+        }
+
+        .workflow-step::after {
+            content: '→';
+            position: absolute;
+            right: -15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .workflow-step:last-child::after {
+            display: none;
+        }
+
+        .workflow-step .step-number {
+            width: 40px;
+            height: 40px;
+            background: var(--primary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 15px;
+            font-weight: 700;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                width: 240px;
+            }
+            .main-content {
+                margin-left: 240px;
+            }
+            .grid-3, .grid-4 {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 20px;
+            }
+            .grid-2, .grid-3, .grid-4 {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar {
+                display: none;
+            }
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <nav class="sidebar">
+        <div class="sidebar-header">
+            <h1>Collecte Taxe</h1>
+            <p>Documentation Technique</p>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Introduction</div>
+            <a href="#apercu" class="nav-link">Apercu General</a>
+            <a href="#architecture" class="nav-link">Architecture</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Calculs</div>
+            <a href="#calculs-montants" class="nav-link">Montants</a>
+            <a href="#calculs-commissions" class="nav-link">Commissions</a>
+            <a href="#calculs-penalites" class="nav-link">Penalites</a>
+            <a href="#calculs-pourcentages" class="nav-link">Pourcentages</a>
+            <a href="#statuts-paiement" class="nav-link">Statuts de Paiement</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Fonctionnalites</div>
+            <a href="#gestion-taxes" class="nav-link">Gestion des Taxes</a>
+            <a href="#gestion-contribuables" class="nav-link">Contribuables</a>
+            <a href="#collectes" class="nav-link">Collectes</a>
+            <a href="#impayes" class="nav-link">Impayes</a>
+            <a href="#journal" class="nav-link">Journal de Travail</a>
+            <a href="#caisses" class="nav-link">Gestion des Caisses</a>
+            <a href="#cartographie" class="nav-link">Cartographie</a>
+            <a href="#rapports" class="nav-link">Rapports</a>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-section-title">Reference</div>
+            <a href="#api-endpoints" class="nav-link">API Endpoints</a>
+            <a href="#modele-donnees" class="nav-link">Modele de Donnees</a>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="page-header">
+            <h1>Documentation Technique</h1>
+            <p>Application de Gestion de Collecte de Taxes Municipales</p>
+        </header>
+
+        <!-- APERCU GENERAL -->
+        <section id="apercu">
+            <h2>Apercu General</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128200;</span>
+                    Presentation du Systeme
+                </div>
+                <p>
+                    L'application <strong>Collecte Taxe</strong> est une solution complete de gestion de la collecte
+                    des taxes municipales. Elle permet de suivre les contribuables, enregistrer les collectes,
+                    calculer les commissions des collecteurs et generer des rapports detailles.
+                </p>
+            </div>
+
+            <div class="grid-4">
+                <div class="stat-card">
+                    <div class="stat-value">12+</div>
+                    <div class="stat-label">Modules Fonctionnels</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">50+</div>
+                    <div class="stat-label">Endpoints API</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">15+</div>
+                    <div class="stat-label">Tables de Donnees</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value">3</div>
+                    <div class="stat-label">Applications Frontend</div>
+                </div>
+            </div>
+
+            <h3>Composants Principaux</h3>
+            <div class="grid-3">
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon blue">&#128187;</span>
+                        Backend API
+                    </div>
+                    <p>API REST FastAPI avec authentification JWT, gestion des roles et connexion PostgreSQL.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon green">&#128241;</span>
+                        Frontend Admin
+                    </div>
+                    <p>Interface Angular pour les administrateurs et superviseurs de la collecte.</p>
+                </div>
+                <div class="card">
+                    <div class="card-title">
+                        <span class="icon orange">&#128100;</span>
+                        Portail Citoyen
+                    </div>
+                    <p>Interface web permettant aux contribuables de consulter leur situation fiscale.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ARCHITECTURE -->
+        <section id="architecture">
+            <h2>Architecture Technique</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon cyan">&#9881;</span>
+                    Stack Technologique
+                </div>
+                <table>
+                    <tr>
+                        <th>Composant</th>
+                        <th>Technologie</th>
+                        <th>Version</th>
+                    </tr>
+                    <tr>
+                        <td>Backend</td>
+                        <td>Python FastAPI</td>
+                        <td>0.100+</td>
+                    </tr>
+                    <tr>
+                        <td>Frontend</td>
+                        <td>Angular</td>
+                        <td>17+</td>
+                    </tr>
+                    <tr>
+                        <td>Base de donnees</td>
+                        <td>PostgreSQL + PostGIS</td>
+                        <td>15+</td>
+                    </tr>
+                    <tr>
+                        <td>Authentification</td>
+                        <td>JWT (JSON Web Tokens)</td>
+                        <td>-</td>
+                    </tr>
+                    <tr>
+                        <td>Hebergement</td>
+                        <td>Render</td>
+                        <td>-</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- CALCULS DES MONTANTS -->
+        <section id="calculs-montants">
+            <h2>Calculs des Montants</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128176;</span>
+                    Montant Attendu (montant_attendu)
+                </div>
+                <p>Le montant attendu represente la somme totale qu'un contribuable doit payer pour une taxe donnee.</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        montant_attendu = montant_custom OU taxe.montant
+                    </div>
+                    <div class="description">
+                        <strong>Logique :</strong> Si un montant personnalise est defini pour l'affectation (cas des taxes variables),
+                        il est utilise. Sinon, le montant standard de la taxe s'applique.
+                    </div>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Python - Backend</span>
+montant_attendu = affectation.montant_custom <span class="keyword">or</span> Decimal(taxe.montant)
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#9989;</span>
+                    Montant Paye (montant_paye)
+                </div>
+                <p>Le montant paye correspond a la somme de toutes les collectes effectuees pour une taxe specifique d'un contribuable.</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        montant_paye = SUM(collectes.montant)<br>
+                        <small>WHERE contribuable_id = X AND taxe_id = Y AND status = 'completed'</small>
+                    </div>
+                    <div class="description">
+                        <strong>Conditions :</strong> Seules les collectes avec le statut "completed" et non annulees sont comptabilisees.
+                    </div>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Requete SQL via SQLAlchemy</span>
+collectes = db.query(func.sum(InfoCollecte.montant)).filter(
+    InfoCollecte.contribuable_id == contribuable_id,
+    InfoCollecte.taxe_id == taxe_id,
+    InfoCollecte.statut == <span class="string">'completed'</span>
+).scalar()
+
+montant_paye = Decimal(collectes) <span class="keyword">if</span> collectes <span class="keyword">else</span> Decimal(<span class="string">"0.00"</span>)
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon orange">&#128181;</span>
+                    Montant Restant (montant_restant)
+                </div>
+                <p>Le montant restant indique ce qu'il reste a payer pour solder completement la taxe.</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        montant_restant = montant_attendu - montant_paye
+                    </div>
+                    <div class="description">
+                        <strong>Note :</strong> Ce montant peut etre negatif si un trop-percu a ete enregistre (rare).
+                    </div>
+                </div>
+
+                <div class="alert alert-info">
+                    <strong>Precision decimale :</strong> Tous les montants utilisent le type Numeric(12, 2)
+                    pour garantir une precision a 2 decimales, essentielle pour les calculs financiers.
+                </div>
+            </div>
+        </section>
+
+        <!-- CALCULS DES COMMISSIONS -->
+        <section id="calculs-commissions">
+            <h2>Calculs des Commissions</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128178;</span>
+                    Commission sur Collecte
+                </div>
+                <p>Chaque collecteur percoit une commission calculee sur le montant collecte, selon le pourcentage defini pour chaque taxe.</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        commission = montant_collecte x (commission_pourcentage / 100)
+                    </div>
+                    <div class="description">
+                        <strong>Exemple :</strong> Pour une collecte de 50 000 FCFA avec une commission de 5% :<br>
+                        commission = 50 000 x (5 / 100) = <strong>2 500 FCFA</strong>
+                    </div>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Calcul de la commission</span>
+commission = <span class="keyword">float</span>(collecte.montant) * (<span class="keyword">float</span>(taxe.commission_pourcentage) / <span class="number">100</span>)
+
+<span class="comment"># Enregistrement dans la collecte</span>
+db_collecte.commission = commission
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128202;</span>
+                    Commission Journaliere
+                </div>
+                <p>Les commissions sont agregees quotidiennement pour chaque collecteur dans la table <code>commission_journaliere</code>.</p>
+
+                <table>
+                    <tr>
+                        <th>Champ</th>
+                        <th>Description</th>
+                        <th>Calcul</th>
+                    </tr>
+                    <tr>
+                        <td>montant_collecte</td>
+                        <td>Total collecte dans la journee</td>
+                        <td>SUM(collectes.montant)</td>
+                    </tr>
+                    <tr>
+                        <td>commission_montant</td>
+                        <td>Total des commissions</td>
+                        <td>SUM(collectes.commission)</td>
+                    </tr>
+                    <tr>
+                        <td>commission_pourcentage</td>
+                        <td>Taux moyen de commission</td>
+                        <td>(commission / montant) x 100</td>
+                    </tr>
+                </table>
+            </div>
+
+            <h3>Exemple de Calcul de Commission</h3>
+            <div class="grid-2">
+                <div class="card">
+                    <h4>Donnees d'entree</h4>
+                    <table>
+                        <tr><td>Montant collecte</td><td><strong>75 000 FCFA</strong></td></tr>
+                        <tr><td>Taux de commission</td><td><strong>4.5%</strong></td></tr>
+                    </table>
+                </div>
+                <div class="card">
+                    <h4>Resultat</h4>
+                    <table>
+                        <tr><td>Commission</td><td><strong>3 375 FCFA</strong></td></tr>
+                        <tr><td>Net pour la mairie</td><td><strong>71 625 FCFA</strong></td></tr>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- CALCULS DES PENALITES -->
+        <section id="calculs-penalites">
+            <h2>Calculs des Penalites</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon red">&#9888;</span>
+                    Penalites de Retard
+                </div>
+                <p>Les penalites sont calculees automatiquement pour les taxes impayees apres leur date d'echeance.</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        penalites = montant_initial x (taux_journalier / 100) x jours_retard
+                    </div>
+                    <div class="description">
+                        <strong>Parametres par defaut :</strong><br>
+                        - Taux journalier : <strong>0.5%</strong> par jour de retard<br>
+                        - Calcul des jours : difference entre aujourd'hui et la date d'echeance
+                    </div>
+                </div>
+
+                <div class="code-block">
+<span class="keyword">def</span> calculer_penalites(montant_initial, date_echeance, taux_journalier=Decimal(<span class="string">"0.5"</span>)):
+    jours_retard = max(<span class="number">0</span>, (datetime.utcnow() - date_echeance).days)
+    penalites = montant_initial * (taux_journalier / Decimal(<span class="string">"100"</span>)) * Decimal(jours_retard)
+    <span class="keyword">return</span> penalites, jours_retard
+                </div>
+            </div>
+
+            <h3>Exemple de Calcul de Penalites</h3>
+            <div class="card">
+                <table>
+                    <tr>
+                        <th>Parametre</th>
+                        <th>Valeur</th>
+                    </tr>
+                    <tr>
+                        <td>Montant initial de la taxe</td>
+                        <td>100 000 FCFA</td>
+                    </tr>
+                    <tr>
+                        <td>Taux journalier</td>
+                        <td>0.5%</td>
+                    </tr>
+                    <tr>
+                        <td>Jours de retard</td>
+                        <td>45 jours</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Penalites</strong></td>
+                        <td><strong>100 000 x 0.005 x 45 = 22 500 FCFA</strong></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total a payer</strong></td>
+                        <td><strong>122 500 FCFA</strong></td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon orange">&#128220;</span>
+                    Niveaux de Priorite
+                </div>
+                <p>La priorite d'un dossier d'impaye est determinee automatiquement selon le nombre de jours de retard :</p>
+
+                <table>
+                    <tr>
+                        <th>Jours de Retard</th>
+                        <th>Priorite</th>
+                        <th>Badge</th>
+                    </tr>
+                    <tr>
+                        <td>0 - 30 jours</td>
+                        <td>Faible</td>
+                        <td><span class="badge badge-info">FAIBLE</span></td>
+                    </tr>
+                    <tr>
+                        <td>31 - 60 jours</td>
+                        <td>Normale</td>
+                        <td><span class="badge badge-warning">NORMALE</span></td>
+                    </tr>
+                    <tr>
+                        <td>61 - 90 jours</td>
+                        <td>Elevee</td>
+                        <td><span class="badge badge-danger">ELEVEE</span></td>
+                    </tr>
+                    <tr>
+                        <td>90+ jours</td>
+                        <td>Urgente</td>
+                        <td><span class="badge badge-danger">URGENTE</span></td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- CALCULS DES POURCENTAGES -->
+        <section id="calculs-pourcentages">
+            <h2>Calculs des Pourcentages</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128200;</span>
+                    Taux de Recouvrement
+                </div>
+                <p>Le taux de recouvrement mesure l'efficacite de la collecte par rapport aux montants attendus.</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        taux_recouvrement = (montant_paye_total / montant_attendu_total) x 100
+                    </div>
+                    <div class="description">
+                        <strong>Interpretation :</strong><br>
+                        - 100% = Tous les montants attendus ont ete collectes<br>
+                        - &lt; 100% = Il reste des montants a collecter<br>
+                        - &gt; 100% = Trop-percu (paiements anticipes ou erreurs)
+                    </div>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Calcul du taux de recouvrement global</span>
+pourcentage_recouvrement = <span class="number">0.0</span>
+<span class="keyword">if</span> montant_attendu_total > <span class="number">0</span>:
+    pourcentage_recouvrement = <span class="keyword">float</span>(montant_paye_total / montant_attendu_total * <span class="number">100</span>)
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128176;</span>
+                    Taux de Paiement par Zone
+                </div>
+                <p>Mesure le pourcentage de contribuables a jour dans une zone geographique donnee.</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        taux_paiement = (contribuables_payes / total_contribuables) x 100
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon orange">&#128202;</span>
+                    Repartition par Moyen de Paiement
+                </div>
+                <p>Pourcentage de collectes par type de paiement (especes, mobile money, carte).</p>
+
+                <div class="formula-box">
+                    <div class="formula">
+                        pourcentage_moyen = (montant_moyen / montant_total) x 100
+                    </div>
+                    <div class="description">
+                        <strong>Types de paiement :</strong> especes, mobile_money, carte
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- STATUTS DE PAIEMENT -->
+        <section id="statuts-paiement">
+            <h2>Statuts de Paiement</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128203;</span>
+                    Logique de Determination du Statut
+                </div>
+                <p>Le statut de paiement d'une taxation est calcule dynamiquement selon les regles suivantes :</p>
+
+                <div class="workflow">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <strong>Calcul</strong>
+                        <p>Comparaison montant_paye vs montant_attendu</p>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <strong>Evaluation</strong>
+                        <p>Verification de la date d'echeance</p>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <strong>Attribution</strong>
+                        <p>Assignation du statut final</p>
+                    </div>
+                </div>
+
+                <div class="code-block">
+<span class="comment"># Logique de determination du statut</span>
+<span class="keyword">if</span> montant_paye >= montant_attendu:
+    statut = <span class="string">"PAYE"</span>
+<span class="keyword">elif</span> montant_paye > <span class="number">0</span>:
+    statut = <span class="string">"PARTIEL"</span>
+<span class="keyword">else</span>:
+    statut = <span class="string">"IMPAYE"</span>
+
+<span class="comment"># Verification du retard</span>
+<span class="keyword">if</span> date_fin <span class="keyword">and</span> date_fin < datetime.utcnow() <span class="keyword">and</span> montant_paye < montant_attendu:
+    statut = <span class="string">"RETARD"</span>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="card">
+                    <h4><span class="badge badge-success">PAYE</span></h4>
+                    <p>Le contribuable a paye l'integralite du montant attendu pour cette taxe.</p>
+                    <p><strong>Condition :</strong> montant_paye >= montant_attendu</p>
+                </div>
+                <div class="card">
+                    <h4><span class="badge badge-warning">PARTIEL</span></h4>
+                    <p>Le contribuable a effectue un ou plusieurs paiements mais n'a pas solde la taxe.</p>
+                    <p><strong>Condition :</strong> montant_paye > 0 ET montant_paye < montant_attendu</p>
+                </div>
+                <div class="card">
+                    <h4><span class="badge badge-danger">IMPAYE</span></h4>
+                    <p>Aucun paiement n'a ete enregistre pour cette taxe.</p>
+                    <p><strong>Condition :</strong> montant_paye = 0</p>
+                </div>
+                <div class="card">
+                    <h4><span class="badge badge-danger">RETARD</span></h4>
+                    <p>La date d'echeance est depassee et la taxe n'est pas entierement payee.</p>
+                    <p><strong>Condition :</strong> date_fin < maintenant ET montant_paye < montant_attendu</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- GESTION DES TAXES -->
+        <section id="gestion-taxes">
+            <h2>Gestion des Taxes</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128203;</span>
+                    Proprietes d'une Taxe
+                </div>
+                <table>
+                    <tr>
+                        <th>Champ</th>
+                        <th>Type</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>nom</td>
+                        <td>String</td>
+                        <td>Nom de la taxe</td>
+                    </tr>
+                    <tr>
+                        <td>code</td>
+                        <td>String</td>
+                        <td>Code unique de la taxe</td>
+                    </tr>
+                    <tr>
+                        <td>montant</td>
+                        <td>Numeric(12,2)</td>
+                        <td>Montant de base de la taxe</td>
+                    </tr>
+                    <tr>
+                        <td>commission_pourcentage</td>
+                        <td>Numeric(5,2)</td>
+                        <td>Pourcentage de commission pour le collecteur</td>
+                    </tr>
+                    <tr>
+                        <td>periodicite</td>
+                        <td>Enum</td>
+                        <td>journaliere, hebdomadaire, mensuelle, trimestrielle, annuelle</td>
+                    </tr>
+                    <tr>
+                        <td>montant_variable</td>
+                        <td>Boolean</td>
+                        <td>Si vrai, permet un montant personnalise par contribuable</td>
+                    </tr>
+                    <tr>
+                        <td>actif</td>
+                        <td>Boolean</td>
+                        <td>Statut actif/inactif de la taxe</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128279;</span>
+                    Affectation de Taxes
+                </div>
+                <p>Une affectation lie un contribuable a une taxe avec des parametres specifiques.</p>
+                <ul class="feature-list">
+                    <li>
+                        <span class="check">&#10003;</span>
+                        <div>
+                            <strong>Date de debut et fin</strong>
+                            <p>Definit la periode de validite de l'affectation</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="check">&#10003;</span>
+                        <div>
+                            <strong>Montant personnalise</strong>
+                            <p>Permet de definir un montant different du montant standard (taxes variables)</p>
+                        </div>
+                    </li>
+                    <li>
+                        <span class="check">&#10003;</span>
+                        <div>
+                            <strong>Statut actif</strong>
+                            <p>Permet de desactiver temporairement une affectation</p>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- GESTION DES CONTRIBUABLES -->
+        <section id="gestion-contribuables">
+            <h2>Gestion des Contribuables</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128100;</span>
+                    Informations du Contribuable
+                </div>
+                <table>
+                    <tr>
+                        <th>Champ</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>nom, prenom</td>
+                        <td>Identite du contribuable</td>
+                    </tr>
+                    <tr>
+                        <td>telephone</td>
+                        <td>Numero de telephone (unique)</td>
+                    </tr>
+                    <tr>
+                        <td>numero_identification</td>
+                        <td>Numero d'identification fiscale</td>
+                    </tr>
+                    <tr>
+                        <td>latitude, longitude</td>
+                        <td>Coordonnees GPS</td>
+                    </tr>
+                    <tr>
+                        <td>quartier_id</td>
+                        <td>Quartier de residence (auto-detecte si GPS)</td>
+                    </tr>
+                    <tr>
+                        <td>collecteur_id</td>
+                        <td>Collecteur assigne</td>
+                    </tr>
+                    <tr>
+                        <td>qr_code</td>
+                        <td>Code QR unique pour identification rapide</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128205;</span>
+                    Detection Automatique du Quartier
+                </div>
+                <p>Le systeme utilise PostGIS pour determiner automatiquement le quartier le plus proche des coordonnees GPS.</p>
+                <div class="code-block">
+<span class="comment"># Calcul de la distance au quartier le plus proche</span>
+row = db.query(
+    Quartier.id,
+    func.ST_DistanceSphere(Quartier.geom, geom_point).label(<span class="string">"distance_m"</span>)
+).filter(
+    Quartier.geom.isnot(<span class="keyword">None</span>)
+).order_by(
+    func.ST_DistanceSphere(Quartier.geom, geom_point)
+).limit(<span class="number">1</span>).first()
+                </div>
+            </div>
+        </section>
+
+        <!-- COLLECTES -->
+        <section id="collectes">
+            <h2>Gestion des Collectes</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128181;</span>
+                    Processus de Collecte
+                </div>
+                <div class="workflow">
+                    <div class="workflow-step">
+                        <div class="step-number">1</div>
+                        <strong>Identification</strong>
+                        <p>Scan QR ou recherche du contribuable</p>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">2</div>
+                        <strong>Selection</strong>
+                        <p>Choix de la taxe a collecter</p>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">3</div>
+                        <strong>Paiement</strong>
+                        <p>Enregistrement du montant et mode de paiement</p>
+                    </div>
+                    <div class="workflow-step">
+                        <div class="step-number">4</div>
+                        <strong>Validation</strong>
+                        <p>Commission calculee, recue generee</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128179;</span>
+                    Modes de Paiement
+                </div>
+                <div class="grid-3">
+                    <div class="stat-card">
+                        <div class="stat-value">&#128181;</div>
+                        <div class="stat-label">Especes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">&#128241;</div>
+                        <div class="stat-label">Mobile Money</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">&#128179;</div>
+                        <div class="stat-label">Carte Bancaire</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon orange">&#128203;</span>
+                    Statuts de Collecte
+                </div>
+                <table>
+                    <tr>
+                        <th>Statut</th>
+                        <th>Description</th>
+                        <th>Impact sur le calcul</th>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">pending</span></td>
+                        <td>En attente de validation</td>
+                        <td>Non comptabilise</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">completed</span></td>
+                        <td>Collecte validee</td>
+                        <td>Comptabilise dans montant_paye</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-danger">failed</span></td>
+                        <td>Echec du paiement</td>
+                        <td>Non comptabilise</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-info">cancelled</span></td>
+                        <td>Collecte annulee</td>
+                        <td>Non comptabilise</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- IMPAYES -->
+        <section id="impayes">
+            <h2>Gestion des Impayes</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon red">&#128176;</span>
+                    Detection Automatique
+                </div>
+                <p>Le systeme detecte automatiquement les impayes via l'endpoint <code>/api/impayes/detecter</code>.</p>
+
+                <div class="alert alert-warning">
+                    <strong>Criteres de detection :</strong>
+                    <ul>
+                        <li>Date d'echeance depassee</li>
+                        <li>Montant paye inferieur au montant attendu</li>
+                        <li>Affectation active</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon orange">&#128203;</span>
+                    Cycle de Vie d'un Dossier
+                </div>
+                <table>
+                    <tr>
+                        <th>Statut</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-warning">en_cours</span></td>
+                        <td>Dossier ouvert, en attente de recouvrement</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-info">partiellement_paye</span></td>
+                        <td>Des paiements ont ete effectues mais le solde reste</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-success">paye</span></td>
+                        <td>Le dossier a ete entierement solde</td>
+                    </tr>
+                    <tr>
+                        <td><span class="badge badge-secondary">archive</span></td>
+                        <td>Dossier clos (paye ou irrecuperable)</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- JOURNAL DE TRAVAIL -->
+        <section id="journal">
+            <h2>Journal de Travail</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128203;</span>
+                    Journal Quotidien
+                </div>
+                <p>Chaque collecteur dispose d'un journal de travail quotidien qui trace toutes ses activites.</p>
+
+                <table>
+                    <tr>
+                        <th>Metrique</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>nb_collectes</td>
+                        <td>Nombre de collectes effectuees</td>
+                    </tr>
+                    <tr>
+                        <td>montant_collectes</td>
+                        <td>Total des montants collectes</td>
+                    </tr>
+                    <tr>
+                        <td>nb_operations_caisse</td>
+                        <td>Nombre d'operations de caisse</td>
+                    </tr>
+                    <tr>
+                        <td>total_entrees</td>
+                        <td>Total des entrees en caisse</td>
+                    </tr>
+                    <tr>
+                        <td>total_sorties</td>
+                        <td>Total des sorties de caisse</td>
+                    </tr>
+                    <tr>
+                        <td>nb_relances</td>
+                        <td>Nombre de relances envoyees</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128176;</span>
+                    Generation des Commissions
+                </div>
+                <p>A la cloture du journal, les commissions journalieres sont generees automatiquement.</p>
+                <div class="code-block">
+<span class="comment"># Calcul des commissions journalieres</span>
+commission = CommissionJournaliere(
+    collecteur_id=collecteur_id,
+    date_travail=target_date,
+    montant_collecte=total_collecte,
+    commission_montant=total_commission,
+    commission_pourcentage=(total_commission / total_collecte * <span class="number">100</span>),
+    statut=<span class="string">"genere"</span>
+)
+                </div>
+            </div>
+        </section>
+
+        <!-- GESTION DES CAISSES -->
+        <section id="caisses">
+            <h2>Gestion des Caisses</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128176;</span>
+                    Types de Caisse
+                </div>
+                <div class="grid-2">
+                    <div class="stat-card">
+                        <div class="stat-value">&#128181;</div>
+                        <div class="stat-label">Caisse Physique (Especes)</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">&#128241;</div>
+                        <div class="stat-label">Caisse En Ligne (Digital)</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#9881;</span>
+                    Operations de Caisse
+                </div>
+                <table>
+                    <tr>
+                        <th>Type</th>
+                        <th>Description</th>
+                        <th>Impact Solde</th>
+                    </tr>
+                    <tr>
+                        <td>OUVERTURE</td>
+                        <td>Ouverture de caisse avec fond initial</td>
+                        <td>+ montant</td>
+                    </tr>
+                    <tr>
+                        <td>ENTREE</td>
+                        <td>Depot d'especes</td>
+                        <td>+ montant</td>
+                    </tr>
+                    <tr>
+                        <td>SORTIE</td>
+                        <td>Retrait d'especes</td>
+                        <td>- montant</td>
+                    </tr>
+                    <tr>
+                        <td>AJUSTEMENT</td>
+                        <td>Correction de solde</td>
+                        <td>+/- montant</td>
+                    </tr>
+                    <tr>
+                        <td>FERMETURE</td>
+                        <td>Fermeture de caisse</td>
+                        <td>Verification solde</td>
+                    </tr>
+                    <tr>
+                        <td>CLOTURE</td>
+                        <td>Cloture definitive</td>
+                        <td>Solde = 0</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon orange">&#128178;</span>
+                    Calcul du Solde
+                </div>
+                <div class="formula-box">
+                    <div class="formula">
+                        solde_actuel = solde_initial + SUM(operations.montant)
+                    </div>
+                    <div class="description">
+                        Le solde est calcule en temps reel en additionnant toutes les operations
+                        (positives pour entrees, negatives pour sorties).
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CARTOGRAPHIE -->
+        <section id="cartographie">
+            <h2>Cartographie</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128205;</span>
+                    Visualisation Geographique
+                </div>
+                <p>La cartographie permet de visualiser les contribuables sur une carte interactive avec leur statut de paiement.</p>
+
+                <div class="grid-3">
+                    <div class="card">
+                        <h4 style="color: #10b981;">&#9679; Vert</h4>
+                        <p>Contribuable a jour (paye)</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: #f59e0b;">&#9679; Orange</h4>
+                        <p>Paiement partiel</p>
+                    </div>
+                    <div class="card">
+                        <h4 style="color: #ef4444;">&#9679; Rouge</h4>
+                        <p>Impaye</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128202;</span>
+                    Statistiques par Zone
+                </div>
+                <table>
+                    <tr>
+                        <th>Metrique</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>total_contribuables</td>
+                        <td>Nombre de contribuables dans la zone</td>
+                    </tr>
+                    <tr>
+                        <td>contribuables_payes</td>
+                        <td>Nombre de contribuables a jour</td>
+                    </tr>
+                    <tr>
+                        <td>taux_paiement</td>
+                        <td>Pourcentage de contribuables a jour</td>
+                    </tr>
+                    <tr>
+                        <td>montant_collecte</td>
+                        <td>Total collecte dans la zone</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- RAPPORTS -->
+        <section id="rapports">
+            <h2>Rapports et Statistiques</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128202;</span>
+                    Statistiques Generales
+                </div>
+                <table>
+                    <tr>
+                        <th>Indicateur</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>total_collecte</td>
+                        <td>Montant total collecte</td>
+                    </tr>
+                    <tr>
+                        <td>nombre_transactions</td>
+                        <td>Nombre de collectes effectuees</td>
+                    </tr>
+                    <tr>
+                        <td>moyenne_par_transaction</td>
+                        <td>Ticket moyen</td>
+                    </tr>
+                    <tr>
+                        <td>collecteurs_actifs</td>
+                        <td>Nombre de collecteurs en activite</td>
+                    </tr>
+                    <tr>
+                        <td>taxes_actives</td>
+                        <td>Nombre de taxes en vigueur</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon green">&#128196;</span>
+                    Formats d'Export
+                </div>
+                <div class="grid-3">
+                    <div class="stat-card">
+                        <div class="stat-value">CSV</div>
+                        <div class="stat-label">Donnees brutes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">PDF</div>
+                        <div class="stat-label">Rapports imprimes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">JSON</div>
+                        <div class="stat-label">Integration API</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- API ENDPOINTS -->
+        <section id="api-endpoints">
+            <h2>API Endpoints</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128268;</span>
+                    Endpoints Principaux
+                </div>
+                <table>
+                    <tr>
+                        <th>Endpoint</th>
+                        <th>Methode</th>
+                        <th>Description</th>
+                    </tr>
+                    <tr>
+                        <td>/api/contribuables</td>
+                        <td><span class="badge badge-success">GET</span> <span class="badge badge-info">POST</span></td>
+                        <td>Gestion des contribuables</td>
+                    </tr>
+                    <tr>
+                        <td>/api/contribuables/{id}/assign-taxes</td>
+                        <td><span class="badge badge-info">POST</span></td>
+                        <td>Assigner des taxes a un contribuable</td>
+                    </tr>
+                    <tr>
+                        <td>/api/contribuables/{id}/taxations</td>
+                        <td><span class="badge badge-success">GET</span></td>
+                        <td>Taxes assignees avec montants calcules</td>
+                    </tr>
+                    <tr>
+                        <td>/api/taxes</td>
+                        <td><span class="badge badge-success">GET</span> <span class="badge badge-info">POST</span></td>
+                        <td>Gestion des taxes</td>
+                    </tr>
+                    <tr>
+                        <td>/api/taxations</td>
+                        <td><span class="badge badge-success">GET</span> <span class="badge badge-info">POST</span></td>
+                        <td>Affectations de taxes</td>
+                    </tr>
+                    <tr>
+                        <td>/api/taxations/stats/summary</td>
+                        <td><span class="badge badge-success">GET</span></td>
+                        <td>Statistiques globales des taxations</td>
+                    </tr>
+                    <tr>
+                        <td>/api/collectes</td>
+                        <td><span class="badge badge-success">GET</span> <span class="badge badge-info">POST</span></td>
+                        <td>Enregistrement des collectes</td>
+                    </tr>
+                    <tr>
+                        <td>/api/impayes</td>
+                        <td><span class="badge badge-success">GET</span></td>
+                        <td>Liste des dossiers d'impayes</td>
+                    </tr>
+                    <tr>
+                        <td>/api/impayes/detecter</td>
+                        <td><span class="badge badge-info">POST</span></td>
+                        <td>Detection automatique des impayes</td>
+                    </tr>
+                    <tr>
+                        <td>/api/journal/travaux/current</td>
+                        <td><span class="badge badge-success">GET</span></td>
+                        <td>Journal de travail du jour</td>
+                    </tr>
+                    <tr>
+                        <td>/api/journal/commissions/generer</td>
+                        <td><span class="badge badge-info">POST</span></td>
+                        <td>Generation des commissions</td>
+                    </tr>
+                    <tr>
+                        <td>/api/rapports/statistiques-generales</td>
+                        <td><span class="badge badge-success">GET</span></td>
+                        <td>Statistiques globales</td>
+                    </tr>
+                    <tr>
+                        <td>/api/cartographie/statistiques</td>
+                        <td><span class="badge badge-success">GET</span></td>
+                        <td>Statistiques par zone geographique</td>
+                    </tr>
+                </table>
+            </div>
+        </section>
+
+        <!-- MODELE DE DONNEES -->
+        <section id="modele-donnees">
+            <h2>Modele de Donnees</h2>
+
+            <div class="card">
+                <div class="card-title">
+                    <span class="icon blue">&#128451;</span>
+                    Tables Principales
+                </div>
+                <table>
+                    <tr>
+                        <th>Table</th>
+                        <th>Description</th>
+                        <th>Champs Cles</th>
+                    </tr>
+                    <tr>
+                        <td>contribuable</td>
+                        <td>Contribuables enregistres</td>
+                        <td>nom, telephone, quartier_id, collecteur_id</td>
+                    </tr>
+                    <tr>
+                        <td>taxe</td>
+                        <td>Taxes municipales</td>
+                        <td>nom, montant, commission_pourcentage, periodicite</td>
+                    </tr>
+                    <tr>
+                        <td>affectation_taxe</td>
+                        <td>Liaison contribuable-taxe</td>
+                        <td>contribuable_id, taxe_id, montant_custom, date_debut</td>
+                    </tr>
+                    <tr>
+                        <td>info_collecte</td>
+                        <td>Collectes effectuees</td>
+                        <td>montant, commission, type_paiement, statut</td>
+                    </tr>
+                    <tr>
+                        <td>dossier_impaye</td>
+                        <td>Dossiers d'impayes</td>
+                        <td>montant_initial, montant_paye, penalites, priorite</td>
+                    </tr>
+                    <tr>
+                        <td>caisse</td>
+                        <td>Caisses des collecteurs</td>
+                        <td>type, etat, solde_initial</td>
+                    </tr>
+                    <tr>
+                        <td>operation_caisse</td>
+                        <td>Operations de caisse</td>
+                        <td>type, montant, solde_avant, solde_apres</td>
+                    </tr>
+                    <tr>
+                        <td>journal_travail</td>
+                        <td>Journaux quotidiens</td>
+                        <td>date_travail, nb_collectes, montant_collectes</td>
+                    </tr>
+                    <tr>
+                        <td>commission_journaliere</td>
+                        <td>Commissions par jour</td>
+                        <td>montant_collecte, commission_montant, statut</td>
+                    </tr>
+                </table>
+            </div>
+
+            <div class="alert alert-info">
+                <strong>Precision des montants :</strong> Tous les champs monetaires utilisent le type
+                <code>Numeric(12, 2)</code> pour garantir une precision a 2 decimales. Les pourcentages
+                utilisent <code>Numeric(5, 2)</code>.
+            </div>
+        </section>
+
+        <footer style="margin-top: 50px; padding-top: 30px; border-top: 1px solid var(--border); text-align: center; color: var(--text-secondary);">
+            <p>Documentation Collecte Taxe Municipale - Version 1.0</p>
+            <p>Derniere mise a jour : Janvier 2026</p>
+        </footer>
+    </main>
+
+    <script>
+        // Smooth scrolling for navigation
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href').substring(1);
+                const targetElement = document.getElementById(targetId);
+                if (targetElement) {
+                    targetElement.scrollIntoView({ behavior: 'smooth' });
+                }
+
+                // Update active state
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            });
+        });
+
+        // Highlight current section on scroll
+        window.addEventListener('scroll', function() {
+            const sections = document.querySelectorAll('section[id]');
+            let current = '';
+
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (window.scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
+</body>
+</html>

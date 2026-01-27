@@ -13,12 +13,12 @@ import { AuthService } from '../../services/auth.service';
       <div class="login-content">
         <div class="login-header">
           <h1 class="login-title">Taxes Municipales</h1>
-          <p class="login-subtitle">Mairie de Libreville - Gabon</p>
+          <p class="login-subtitle">Mairie de Port-Gentil - Gabon</p>
         </div>
 
         <div class="logo-section">
           <div class="emblem-container">
-            <img src="/assets/logo_app.png" alt="Logo Mairie de Libreville" class="emblem-logo">
+            <img src="/assets/logo_app.png" alt="Logo Mairie de Port-Gentil" class="emblem-logo">
           </div>
         </div>
 
@@ -113,7 +113,7 @@ import { AuthService } from '../../services/auth.service';
         </div>
 
         <div class="login-footer">
-          <p>&copy; 2025 Mairie de Libreville - Tous droits réservés</p>
+          <p>&copy; 2025 Mairie de Port-Gentil - Tous droits réservés</p>
         </div>
       </div>
     </div>

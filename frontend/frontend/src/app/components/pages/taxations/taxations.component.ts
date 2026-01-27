@@ -183,22 +183,40 @@ export class TaxationsComponent implements OnInit {
   }
 
   getStatusClass(statut: string): string {
-    switch (statut) {
-      case 'payee': return 'status-paid';
-      case 'impayee': return 'status-unpaid';
-      case 'partiellement_payee': return 'status-partial';
-      case 'en_retard': return 'status-overdue';
-      default: return '';
+    const s = statut?.toLowerCase();
+    switch (s) {
+      case 'paye':
+      case 'payee':
+        return 'bg-green-100 text-green-800';
+      case 'impaye':
+      case 'impayee':
+        return 'bg-red-100 text-red-800';
+      case 'partiel':
+      case 'partiellement_payee':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'en_retard':
+        return 'bg-orange-100 text-orange-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
     }
   }
 
   getStatusLabel(statut: string): string {
-    switch (statut) {
-      case 'payee': return 'Payée';
-      case 'impayee': return 'Impayée';
-      case 'partiellement_payee': return 'Partielle';
-      case 'en_retard': return 'En retard';
-      default: return statut;
+    const s = statut?.toLowerCase();
+    switch (s) {
+      case 'paye':
+      case 'payee':
+        return 'Payé';
+      case 'impaye':
+      case 'impayee':
+        return 'Impayé';
+      case 'partiel':
+      case 'partiellement_payee':
+        return 'Partiel';
+      case 'en_retard':
+        return 'En retard';
+      default:
+        return statut || 'Inconnu';
     }
   }
 

@@ -16,10 +16,10 @@ import { AuthService } from '../../services/auth.service';
           <div class="flex justify-between items-center py-4">
             <!-- Logo et nom -->
             <div class="flex items-center space-x-4">
-              <img src="/assets/logo_app.png" alt="Mairie de Libreville" class="h-14 w-auto">
+              <img src="/assets/logo_app.png" alt="Mairie de Port-Gentil" class="h-14 w-auto">
               <div>
                 <h1 class="text-2xl font-bold text-gray-900">Portail Citoyen</h1>
-                <p class="text-sm text-gray-600">Mairie de Libreville</p>
+                <p class="text-sm text-gray-600">Mairie de Port-Gentil</p>
               </div>
             </div>
             
@@ -58,7 +58,7 @@ import { AuthService } from '../../services/auth.service';
             <p class="font-semibold mb-1">ATTENTION</p>
             <p class="text-sm">
               Pour toute opération sensible (paiement, demande de documents,...)
-              Veuillez toujours vérifier que vous êtes bien sur le site officiel de la Mairie de Libreville
+              Veuillez toujours vérifier que vous êtes bien sur le site officiel de la Mairie de Port-Gentil
             </p>
           </div>
         </div>
@@ -70,7 +70,7 @@ import { AuthService } from '../../services/auth.service';
         <div class="absolute inset-0 overflow-hidden">
             <img 
             src="/assets/hotel-de-ville.jpeg" 
-            alt="Hôtel de ville de Libreville"
+            alt="Hôtel de ville de Port-Gentil"
             class="w-full h-full object-cover filter blur-sm scale-110"
           >
           <div class="absolute inset-0 bg-gradient-to-r from-blue-900/80 via-blue-800/70 to-transparent"></div>
@@ -93,7 +93,7 @@ import { AuthService } from '../../services/auth.service';
                 <h2 class="text-4xl md:text-5xl lg:text-6xl font-bold leading-tight">
                   Le portail de téléservices de<br>
                   la Mairie de<br>
-                  Libreville
+                  Port-Gentil
                 </h2>
                 <p class="text-xl md:text-2xl text-blue-100 max-w-xl">
                   Accédez facilement aux services municipaux, effectuez vos démarches et payez vos taxes en ligne
@@ -216,7 +216,7 @@ import { AuthService } from '../../services/auth.service';
                 <img src="/assets/logo_app.png" alt="Logo" class="h-12 w-12">
                 <div>
                   <h4 class="text-xl font-bold">Portail Citoyen</h4>
-                  <p class="text-sm text-indigo-200">Mairie de Libreville</p>
+                  <p class="text-sm text-indigo-200">Mairie de Port-Gentil</p>
                 </div>
               </div>
               <div class="pt-4">
@@ -251,13 +251,13 @@ import { AuthService } from '../../services/auth.service';
                 <li><a [routerLink]="['/services']" class="hover:text-white transition">Inscrivez-vous au portail</a></li>
               </ul>
               <p class="text-xs text-indigo-300 mt-4">
-                Mairie de Libreville - Gabon
+                Mairie de Port-Gentil - Gabon
               </p>
             </div>
           </div>
 
           <div class="border-t border-indigo-800 mt-8 pt-8 text-center text-sm text-indigo-300">
-            <p>&copy; 2024 Mairie de Libreville. Tous droits réservés.</p>
+            <p>&copy; 2024 Mairie de Port-Gentil. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

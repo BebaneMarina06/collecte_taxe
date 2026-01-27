@@ -98,6 +98,16 @@ export class DetailsTaxesComponent implements OnInit, OnChanges {
     });
   }
 
+  formatDateShort(dateString: string): string {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return date.toLocaleDateString('fr-FR', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric'
+    });
+  }
+
   formatNumber(value: number): string {
     if (isNaN(value) || value === null || value === undefined) {
       return '0';
@@ -116,5 +126,14 @@ export class DetailsTaxesComponent implements OnInit, OnChanges {
       'trimestrielle': 'Trimestrielle'
     };
     return labels[periodicite] || periodicite;
+  }
+
+  getStatutLabel(statut: string): string {
+    const labels: { [key: string]: string } = {
+      'paye': 'Payé',
+      'partiel': 'Partiel',
+      'impaye': 'Impayé'
+    };
+    return labels[statut?.toLowerCase()] || statut;
   }
 }

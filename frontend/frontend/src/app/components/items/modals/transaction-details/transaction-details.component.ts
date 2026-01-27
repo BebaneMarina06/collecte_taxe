@@ -279,7 +279,7 @@ export class TransactionDetailsComponent implements OnChanges {
       
       pdf.setFontSize(11);
       pdf.setFont('helvetica', 'normal');
-      pdf.text('Mairie de Libreville - Gabon', margin + 50, yPosition + 30);
+      pdf.text('Mairie de Port-Gentil - Gabon', margin + 50, yPosition + 30);
       
       // Référence dans le coin supérieur droit
       pdf.setFontSize(10);

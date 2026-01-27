@@ -613,17 +613,18 @@ def get_contribuable_taxations(contribuable_id: int, db: Session = Depends(get_d
             montant_paye = Decimal(collectes_sum) if collectes_sum else Decimal("0.00")
             montant_restant = montant_attendu - montant_paye
 
-            # Déterminer le statut
-            if montant_paye >= montant_attendu:
-                statut = "PAYE"
-            elif montant_paye > 0:
-                statut = "PARTIEL"
-            else:
-                statut = "IMPAYE"
-
             # Vérifier si en retard (date_fin dépassée et non payée)
+            est_en_retard = False
             if affectation.date_fin and affectation.date_fin < datetime.utcnow() and montant_paye < montant_attendu:
-                statut = "RETARD"
+                est_en_retard = True
+
+            # Déterminer le statut (en minuscules pour correspondre au frontend)
+            if montant_paye >= montant_attendu:
+                statut = "paye"
+            elif montant_paye > 0:
+                statut = "partiel"
+            else:
+                statut = "impaye"
 
             result.append({
                 "id": affectation.id,
@@ -637,14 +638,18 @@ def get_contribuable_taxations(contribuable_id: int, db: Session = Depends(get_d
                 "montant_paye": float(montant_paye),
                 "montant_restant": float(montant_restant),
                 "statut": statut,
+                "est_en_retard": est_en_retard,
                 "periodicite": taxe.periodicite.value if hasattr(taxe.periodicite, 'value') else str(taxe.periodicite),
                 "description": taxe.description or "",
                 "commission_pourcentage": float(taxe.commission_pourcentage),
                 "type_taxe": taxe.type_taxe.nom if taxe.type_taxe else None,
                 "service": taxe.service.nom if taxe.service else None,
                 "actif": affectation.actif,
-                "date_debut": affectation.date_debut.isoformat() if affectation.date_debut else None,
-                "date_fin": affectation.date_fin.isoformat() if affectation.date_fin else None,
+                "periode_debut": affectation.date_debut.isoformat() if affectation.date_debut else None,
+                "periode_fin": affectation.date_fin.isoformat() if affectation.date_fin else None,
+                "date_echeance": affectation.date_fin.isoformat() if affectation.date_fin else None,
+                "annee": affectation.date_debut.year if affectation.date_debut else datetime.utcnow().year,
+                "mois": affectation.date_debut.month if affectation.date_debut else None,
                 "created_at": affectation.created_at.isoformat() if affectation.created_at else None,
                 "updated_at": affectation.updated_at.isoformat() if affectation.updated_at else None
             })

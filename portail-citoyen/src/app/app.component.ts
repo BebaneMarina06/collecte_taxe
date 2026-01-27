@@ -11,6 +11,6 @@ import { RouterOutlet } from '@angular/router';
   styles: []
 })
 export class AppComponent {
-  title = 'Portail Citoyen - Mairie de Libreville';
+  title = 'Portail Citoyen - Mairie de Port-Gentil';
 }
 
