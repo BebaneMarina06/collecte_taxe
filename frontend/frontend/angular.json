@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "bamboo-pay-merchant": {
+    "collecte-taxe": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
