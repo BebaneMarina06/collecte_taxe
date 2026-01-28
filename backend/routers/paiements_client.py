@@ -1,3 +1,54 @@
+from pydantic import BaseModel
+
+
+# --- Endpoint pour initier un paiement BambooPay côté client ---
+class PaiementRequest(BaseModel):
+    payer_name: str
+    phone: str
+    matricule: str = None
+    raison_sociale: str = None
+    billing_id: str
+    transaction_amount: float
+    return_url: str = None
+    update_status_url: str = None
+
+@router.post("/paiement/bamboopay")
+async def initier_paiement_bamboopay(data: PaiementRequest, db: Session = Depends(get_db)):
+    """
+    Initie un paiement BambooPay, enregistre la transaction et retourne l'URL de paiement
+    """
+    result = await bamboopay_service.initier_paiement(
+        payer_name=data.payer_name,
+        matricule=data.matricule,
+        billing_id=data.billing_id,
+        transaction_amount=data.transaction_amount,
+        phone=data.phone,
+        raison_sociale=data.raison_sociale,
+        return_url=data.return_url,
+        update_status_url=data.update_status_url
+    )
+    if not result.get("success"):
+        raise HTTPException(status_code=400, detail=result.get("error", "Erreur BambooPay"))
+
+    transaction = TransactionBambooPay(
+        payer_name=data.payer_name,
+        phone=data.phone,
+        matricule=data.matricule,
+        raison_sociale=data.raison_sociale,
+        billing_id=data.billing_id,
+        transaction_amount=data.transaction_amount,
+        statut=StatutTransactionEnum.PENDING,
+        date_initiation=datetime.utcnow(),
+        return_url=data.return_url,
+        callback_url=data.update_status_url,
+        reference_bp=None,
+        transaction_id=None
+    )
+    db.add(transaction)
+    db.commit()
+    db.refresh(transaction)
+
+    return {"redirect_url": result["redirect_url"], "transaction_id": transaction.id}
 """
 Routes pour le paiement client via BambooPay
 Interface publique pour les clients
