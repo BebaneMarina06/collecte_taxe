@@ -1,6 +1,6 @@
 """
-Sécurité et authentification JWT - VERSION COMPLÈTE
-Remplacez tout le contenu de votre fichier auth/security.py par ce code
+Sécurité et authentification JWT - VERSION CORRIGÉE
+Ajout de get_current_collecteur_id pour résoudre le problème de lien utilisateur/collecteur
 """
 
 from datetime import datetime, timedelta
@@ -11,7 +11,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from database.database import get_db
-from database.models import Utilisateur, Contribuable
+from database.models import Utilisateur, Contribuable, Collecteur
 
 # Configuration JWT
 import os
@@ -116,6 +116,65 @@ def require_role(allowed_roles: list):
             )
         return current_user
     return role_checker
+
+
+# ==================== NOUVEAU: RÉCUPÉRATION DU COLLECTEUR ====================
+
+async def get_current_collecteur(
+    current_user: Utilisateur = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+) -> Collecteur:
+    """
+    Récupère le collecteur associé à l'utilisateur connecté.
+    Utilise utilisateur_id en priorité, sinon fallback sur l'email.
+    """
+    # Méthode 1: Via utilisateur_id (préféré)
+    collecteur = db.query(Collecteur).filter(
+        Collecteur.utilisateur_id == current_user.id
+    ).first()
+    
+    if collecteur:
+        return collecteur
+    
+    # Méthode 2 (fallback): Via l'email
+    collecteur = db.query(Collecteur).filter(
+        Collecteur.email == current_user.email
+    ).first()
+    
+    if not collecteur:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Aucun collecteur associé à l'utilisateur {current_user.email}. "
+                   f"Veuillez contacter l'administrateur."
+        )
+    
+    # Créer automatiquement le lien s'il n'existe pas
+    if collecteur.utilisateur_id is None:
+        print(f"⚠️ Création automatique du lien: utilisateur {current_user.id} -> collecteur {collecteur.id}")
+        collecteur.utilisateur_id = current_user.id
+        db.commit()
+        db.refresh(collecteur)
+    
+    return collecteur
+
+
+async def get_current_collecteur_id(
+    collecteur: Collecteur = Depends(get_current_collecteur)
+) -> int:
+    """
+    Récupère l'ID du collecteur associé à l'utilisateur connecté.
+    À utiliser dans les routes qui nécessitent un collecteur_id.
+    
+    Exemple d'utilisation:
+        @router.post("/collectes")
+        def create_collecte(
+            collecteur_id: int = Depends(get_current_collecteur_id),
+            db: Session = Depends(get_db)
+        ):
+            # collecteur_id est maintenant le bon ID de la table collecteur
+            ...
+    """
+    return collecteur.id
 
 
 # ==================== AUTHENTIFICATION CITOYENS ====================

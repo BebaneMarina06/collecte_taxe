@@ -167,10 +167,11 @@ class TypeContribuable(Base):
 
 # ==================== TABLE COLLECTEUR ====================
 class Collecteur(Base):
-    """Collecteurs de taxes"""
     __tablename__ = "collecteur"
     
     id = Column(Integer, primary_key=True, index=True)
+    utilisateur_id = Column(Integer, ForeignKey("utilisateur.id"), 
+                           nullable=True, unique=True, index=True)  # ← AJOUTER CETTE LIGNE
     nom = Column(String(100), nullable=False)
     prenom = Column(String(100), nullable=False)
     email = Column(String(100), unique=True, nullable=False, index=True)
