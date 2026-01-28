@@ -5,10 +5,27 @@
   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <title>collecte-taxe</title>
   <base href="/">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Viewport optimisé pour la responsivité -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1, maximum-scale=5, user-scalable=yes, viewport-fit=cover">
+  
+  <!-- Configuration pour les appareils mobiles Apple -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Collecte Taxe">
+  
+  <!-- Thème pour les navigateurs mobiles -->
+  <meta name="theme-color" content="#1e293b">
+  
   <link rel="icon" type="image/png" href="/assets/logo/pog.png">
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap');
+    
+    /* Prévenir le zoom du navigateur sur les inputs */
+    input,
+    select,
+    textarea {
+      font-size: 16px;
+    }
   </style>
 </head>
 <body>

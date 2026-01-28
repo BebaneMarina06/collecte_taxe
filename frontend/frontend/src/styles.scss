@@ -6,6 +6,49 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ==================== VARIABLES SCSS RESPONSIVES ==================== */
+$breakpoint-mobile: 480px;
+$breakpoint-tablet: 768px;
+$breakpoint-desktop: 1024px;
+$breakpoint-large-desktop: 1920px;
+
+// Mixins pour les media queries
+@mixin mobile {
+  @media (max-width: $breakpoint-mobile - 1) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (min-width: $breakpoint-mobile) and (max-width: $breakpoint-tablet - 1) {
+    @content;
+  }
+}
+
+@mixin desktop {
+  @media (min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+@mixin tablet-up {
+  @media (min-width: $breakpoint-tablet) {
+    @content;
+  }
+}
+
+@mixin desktop-up {
+  @media (min-width: $breakpoint-desktop) {
+    @content;
+  }
+}
+
+@mixin large-desktop {
+  @media (min-width: $breakpoint-large-desktop) {
+    @content;
+  }
+}
+
 /* ==================== RESET GLOBAL ==================== */
 *, *::before, *::after {
   margin: 0;
@@ -20,6 +63,14 @@ html {
   font-size: 15px;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  
+  @include mobile {
+    font-size: 13px;
+  }
+  
+  @include tablet {
+    font-size: 14px;
+  }
 }
 
 body {
@@ -44,7 +95,7 @@ app-root, app-layout {
   height: 100%;
 }
 
-/* ==================== TYPOGRAPHIE ==================== */
+/* ==================== TYPOGRAPHIE RESPONSIVE ==================== */
 li, p, a, h1, h2, h3, h4, h5, h6, input, label, textarea, span, td, tr, th, button {
   font-family: "Montserrat", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
@@ -53,6 +104,29 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.2;
   margin: 0;
+}
+
+h1 {
+  font-size: 2rem;
+  @include tablet { font-size: 1.75rem; }
+  @include mobile { font-size: 1.5rem; }
+}
+
+h2 {
+  font-size: 1.75rem;
+  @include tablet { font-size: 1.5rem; }
+  @include mobile { font-size: 1.25rem; }
+}
+
+h3 {
+  font-size: 1.5rem;
+  @include tablet { font-size: 1.25rem; }
+  @include mobile { font-size: 1.1rem; }
+}
+
+h4 {
+  font-size: 1.25rem;
+  @include mobile { font-size: 1rem; }
 }
 
 /* ==================== SCROLLBARS PERSONNALISÉES ==================== */
@@ -122,6 +196,11 @@ table {
       color: #64748b;
       padding: 0.75rem 1rem;
       border-bottom: 1px solid #e2e8f0;
+      
+      @include mobile {
+        padding: 0.5rem 0.75rem;
+        font-size: 0.65rem;
+      }
     }
   }
 
@@ -137,6 +216,11 @@ table {
         padding: 0.875rem 1rem;
         border-bottom: 1px solid #f1f5f9;
         font-size: 0.875rem;
+        
+        @include mobile {
+          padding: 0.6rem 0.75rem;
+          font-size: 0.75rem;
+        }
       }
     }
   }
@@ -159,11 +243,176 @@ table {
   }
 }
 
-/* ==================== RESPONSIVE ==================== */
-@media (max-width: 1024px) {
-  html { font-size: 14px; }
+/* ==================== UTILITAIRES RESPONSIVES ==================== */
+.hide-mobile {
+  @include mobile {
+    display: none !important;
+  }
 }
 
-@media (max-width: 768px) {
+.hide-tablet {
+  @include tablet {
+    display: none !important;
+  }
+}
+
+.hide-desktop {
+  @include desktop-up {
+    display: none !important;
+  }
+}
+
+.show-mobile {
+  display: none;
+  @include mobile {
+    display: block !important;
+  }
+}
+
+.show-tablet {
+  display: none;
+  @include tablet {
+    display: block !important;
+  }
+}
+
+.show-desktop {
+  display: none;
+  @include desktop-up {
+    display: block !important;
+  }
+}
+
+/* ==================== CONTAINER RESPONSIVE ==================== */
+.responsive-container {
+  width: 100%;
+  
+  @include mobile {
+    padding: 0.75rem;
+  }
+  
+  @include tablet {
+    padding: 1rem;
+    max-width: 100%;
+  }
+  
+  @include desktop-up {
+    padding: 1.5rem;
+    max-width: 100%;
+  }
+}
+
+/* ==================== ESPACEMENTS RESPONSIVES ==================== */
+.responsive-gap {
+  gap: 1rem;
+  
+  @include mobile {
+    gap: 0.5rem;
+  }
+  
+  @include tablet {
+    gap: 0.75rem;
+  }
+}
+
+/* ==================== BOUTONS RESPONSIVES ==================== */
+button, .btn {
+  min-height: 44px;  // Min touch target
+  
+  @include mobile {
+    min-width: 44px;
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* ==================== INPUTS RESPONSIVES ==================== */
+input, textarea, select {
+  font-size: 16px;  // Prévenir le zoom sur iOS
+  
+  @include mobile {
+    padding: 0.75rem;
+    border-radius: 8px;
+  }
+}
+
+/* ==================== GRILLES RESPONSIVES ==================== */
+.grid-responsive {
+  display: grid;
+  
+  @include mobile {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+  
+  @include tablet {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+  
+  @include desktop {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  
+  @include large-desktop {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+}
+
+/* ==================== FLEX RESPONSIVE ==================== */
+.flex-responsive {
+  display: flex;
+  flex-wrap: wrap;
+  
+  @include mobile {
+    flex-direction: column;
+  }
+  
+  @include tablet-up {
+    flex-direction: row;
+  }
+}
+
+/* ==================== TEXTE RESPONSIVE ==================== */
+.text-responsive {
+  @include mobile {
+    font-size: 0.875rem;
+  }
+  
+  @include tablet {
+    font-size: 1rem;
+  }
+  
+  @include desktop-up {
+    font-size: 1.125rem;
+  }
+}
+
+/* ==================== RESPONSIVE BREAKPOINTS ==================== */
+@media (max-width: 479px) {
   html { font-size: 13px; }
+  body { font-size: 0.8125rem; }
+}
+
+@media (min-width: 480px) and (max-width: 767px) {
+  html { font-size: 14px; }
+  body { font-size: 0.875rem; }
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  html { font-size: 14px; }
+  body { font-size: 0.875rem; }
+}
+
+@media (min-width: 1024px) and (max-width: 1919px) {
+  html { font-size: 15px; }
+  body { font-size: 0.875rem; }
+}
+
+@media (min-width: 1920px) {
+  /* Grand écran: zoom à 67% pour meilleur utilisation de l'espace */
+  html { font-size: 15px; }
+  body { font-size: 0.875rem; }
 }
