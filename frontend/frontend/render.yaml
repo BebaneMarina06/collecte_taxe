@@ -5,7 +5,7 @@ services:
 
     rootDir: frontend/frontend
 
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run build && ls -la dist/ && ls -la dist/collecte-taxe/ && ls -la dist/collecte-taxe/browser/
 
     # Le chemin est relatif au rootDir (frontend/frontend)
     staticPublishPath: dist/collecte-taxe/browser
