@@ -7,7 +7,14 @@ services:
 
     buildCommand: npm install && npm run build
 
+    # Le chemin est relatif au rootDir (frontend/frontend)
     staticPublishPath: dist/collecte-taxe/browser
+
+    # Ajoutez ces règles de redirection
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
 
     envVars:
       - key: NODE_VERSION
