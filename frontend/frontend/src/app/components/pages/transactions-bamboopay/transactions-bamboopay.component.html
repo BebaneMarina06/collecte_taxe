@@ -1,0 +1,247 @@
+<app-contener>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Transactions BambooPay</h1>
+    <p class="text-gray-600 mt-1">Consultez et gérez les transactions de paiement en ligne via BambooPay</p>
+  </div>
+
+  <!-- Statistiques -->
+  @if (stats) {
+    <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 mb-6">
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Total</p>
+        <p class="text-2xl font-bold text-gray-900">{{ stats.total_transactions }}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-green-100">
+        <p class="text-sm text-green-600">Réussies</p>
+        <p class="text-2xl font-bold text-green-600">{{ stats.total_success }}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-yellow-100">
+        <p class="text-sm text-yellow-600">En attente</p>
+        <p class="text-2xl font-bold text-yellow-600">{{ stats.total_pending }}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-red-100">
+        <p class="text-sm text-red-600">Échouées</p>
+        <p class="text-2xl font-bold text-red-600">{{ stats.total_failed }}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-gray-100">
+        <p class="text-sm text-gray-500">Annulées</p>
+        <p class="text-2xl font-bold text-gray-500">{{ stats.total_cancelled }}</p>
+      </div>
+      <div class="bg-white rounded-xl p-4 shadow-sm border border-green-100 lg:col-span-2">
+        <p class="text-sm text-green-600">Montant encaissé</p>
+        <p class="text-xl font-bold text-green-600">{{ formatMontant(stats.montant_total_success) }}</p>
+      </div>
+    </div>
+  }
+
+  <!-- Filtres -->
+  <div class="bg-white rounded-xl p-4 shadow-sm mb-6">
+    <div class="flex flex-wrap gap-4 items-end">
+      <!-- Recherche -->
+      <div class="flex-1 min-w-[200px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Recherche</label>
+        <input
+          type="text"
+          [(ngModel)]="filters.search"
+          (keyup.enter)="applyFilters()"
+          placeholder="Nom, téléphone, référence..."
+          class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-main"
+        />
+      </div>
+
+      <!-- Statut -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Statut</label>
+        <select
+          [(ngModel)]="filters.statut"
+          (change)="applyFilters()"
+          class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-main"
+        >
+          <option value="">Tous</option>
+          <option value="success">Succès</option>
+          <option value="pending">En attente</option>
+          <option value="failed">Échoué</option>
+          <option value="cancelled">Annulé</option>
+          <option value="refunded">Remboursé</option>
+        </select>
+      </div>
+
+      <!-- Méthode -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Méthode</label>
+        <select
+          [(ngModel)]="filters.paymentMethod"
+          (change)="applyFilters()"
+          class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-main"
+        >
+          <option value="">Toutes</option>
+          <option value="web">Paiement Web</option>
+          <option value="mobile_instant">Mobile Money</option>
+        </select>
+      </div>
+
+      <!-- Date début -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date début</label>
+        <input
+          type="date"
+          [(ngModel)]="filters.dateDebut"
+          (change)="applyFilters()"
+          class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-main"
+        />
+      </div>
+
+      <!-- Date fin -->
+      <div class="min-w-[150px]">
+        <label class="block text-sm font-medium text-gray-700 mb-1">Date fin</label>
+        <input
+          type="date"
+          [(ngModel)]="filters.dateFin"
+          (change)="applyFilters()"
+          class="block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-main"
+        />
+      </div>
+
+      <!-- Boutons -->
+      <div class="flex gap-2">
+        <button
+          (click)="applyFilters()"
+          class="px-4 py-2 bg-main text-white rounded-lg hover:bg-main/90 transition"
+        >
+          Filtrer
+        </button>
+        <button
+          (click)="resetFilters()"
+          class="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition"
+        >
+          Réinitialiser
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tableau des transactions -->
+  @if (loading()) {
+    <div class="text-center py-12">
+      <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-main"></div>
+      <p class="mt-2 text-gray-500">Chargement des transactions...</p>
+    </div>
+  } @else {
+    <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+      <div class="overflow-x-auto">
+        <table class="min-w-full text-sm">
+          <thead class="bg-gray-50 border-b border-gray-200">
+            <tr class="text-xs font-semibold uppercase tracking-wider text-gray-500">
+              <th class="px-4 py-3 text-left">Référence</th>
+              <th class="px-4 py-3 text-left">Payeur</th>
+              <th class="px-4 py-3 text-left">Taxe</th>
+              <th class="px-4 py-3 text-right">Montant</th>
+              <th class="px-4 py-3 text-center">Méthode</th>
+              <th class="px-4 py-3 text-center">Statut</th>
+              <th class="px-4 py-3 text-left">Date</th>
+              <th class="px-4 py-3 text-center">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (transaction of transactions; track transaction.id) {
+              <tr class="hover:bg-gray-50 transition-colors">
+                <td class="px-4 py-3">
+                  <p class="font-mono text-xs text-gray-900">{{ transaction.billing_id }}</p>
+                  @if (transaction.reference_bp) {
+                    <p class="font-mono text-xs text-gray-500">BP: {{ transaction.reference_bp }}</p>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <p class="font-medium text-gray-900">{{ transaction.payer_name }}</p>
+                  <p class="text-xs text-gray-500">{{ transaction.phone }}</p>
+                  @if (transaction.contribuable_nom) {
+                    <p class="text-xs text-blue-600">{{ transaction.contribuable_nom }}</p>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  @if (transaction.taxe_nom) {
+                    <p class="text-sm text-gray-900">{{ transaction.taxe_nom }}</p>
+                  } @else {
+                    <p class="text-sm text-gray-400">-</p>
+                  }
+                </td>
+                <td class="px-4 py-3 text-right">
+                  <p class="font-semibold text-gray-900">{{ formatMontant(transaction.transaction_amount) }}</p>
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <span class="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-700">
+                    {{ getPaymentMethodLabel(transaction.payment_method) }}
+                  </span>
+                  @if (transaction.operateur) {
+                    <p class="text-xs text-gray-500 mt-1">{{ getOperateurLabel(transaction.operateur) }}</p>
+                  }
+                </td>
+                <td class="px-4 py-3 text-center">
+                  <span [class]="'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ' + getStatutBadgeClass(transaction.statut)">
+                    {{ getStatutLabel(transaction.statut) }}
+                  </span>
+                  @if (transaction.statut_message) {
+                    <p class="text-xs text-gray-500 mt-1 max-w-[150px] truncate" [title]="transaction.statut_message">
+                      {{ transaction.statut_message }}
+                    </p>
+                  }
+                </td>
+                <td class="px-4 py-3">
+                  <p class="text-sm text-gray-900">{{ formatDate(transaction.date_initiation) }}</p>
+                  @if (transaction.date_paiement) {
+                    <p class="text-xs text-green-600">Payé: {{ formatDate(transaction.date_paiement) }}</p>
+                  }
+                </td>
+                <td class="px-4 py-3 text-center">
+                  @if (transaction.statut === 'pending') {
+                    <button
+                      (click)="refreshTransaction(transaction.id)"
+                      [disabled]="refreshingId === transaction.id"
+                      class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                    >
+                      @if (refreshingId === transaction.id) {
+                        <svg class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                      } @else {
+                        <svg class="h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M1 4v6h6M23 20v-6h-6"/>
+                          <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+                        </svg>
+                      }
+                      Actualiser
+                    </button>
+                  }
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-4 py-12 text-center text-gray-500">
+                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                  </svg>
+                  <p class="mt-2">Aucune transaction trouvée</p>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    @if (transactions.length > 0) {
+      <div class="mt-4">
+        <app-pagination
+          [currentPage]="currentPage"
+          [totalPages]="totalPages"
+          [pageSize]="pageSize"
+          [totalItems]="totalItems"
+          (pageChange)="onPageChange($event)"
+          (pageSizeChange)="onPageSizeChange($event)"
+        />
+      </div>
+    }
+  }
+</app-contener>

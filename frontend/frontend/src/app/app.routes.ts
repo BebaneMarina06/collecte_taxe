@@ -96,6 +96,13 @@ export const routes: Routes = [
         loadComponent: () => import('./components/pages/demandes-citoyens/demandes-citoyens.component').then(m => m.DemandesCitoyensComponent),
         title: 'Demandes Citoyens'
       },
+      {
+        path: 'transactions-bamboopay',
+        loadComponent: () => import('./components/pages/transactions-bamboopay/transactions-bamboopay.component').then(m => m.TransactionsBambooPayComponent),
+        title: 'Transactions BambooPay',
+        canActivate: [RoleGuard],
+        data: { roles: ['admin', 'agent_back_office'] }
+      },
         {
           path: 'etat-collecteurs',
           loadComponent: () => import('./components/pages/etat-collecteurs/etat-collecteurs.component').then(m => m.EtatCollecteursComponent),

@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>BambooPay API — Full English Documentation</title>
+  <style>
+    :root{--accent:#0ea5a4;--muted:#6b7280;--bg:#f8fafc;--card:#ffffff}
+    body{font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;margin:0;background:var(--bg);color:#0f172a}
+    header{background:linear-gradient(90deg,#06b6d4,#0891b2);color:white;padding:28px 32px}
+    .container{max-width:1100px;margin:28px auto;padding:0 20px}
+    .grid{display:grid;grid-template-columns:260px 1fr;gap:24px}
+    nav{background:var(--card);border-radius:10px;padding:18px;box-shadow:0 6px 18px rgba(2,6,23,0.06)}
+    nav h3{margin:0 0 12px 0;font-size:14px;color:#083344}
+    nav a{display:block;padding:8px 10px;border-radius:8px;color:#0f172a;text-decoration:none;margin-bottom:6px;font-size:14px}
+    nav a:hover{background:#ecfeff}
+    main .card{background:var(--card);border-radius:12px;padding:20px;box-shadow:0 6px 18px rgba(2,6,23,0.05)}
+    .meta{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+    .badge{background:rgba(14,165,164,0.12);color:var(--accent);padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px}
+    pre{background:#0b1220;color:#e6eef6;padding:14px;border-radius:8px;overflow:auto;font-size:13px}
+    code{font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,"Roboto Mono","Helvetica Neue",monospace}
+    .section{margin-bottom:18px}
+    .endpoint{border-left:4px solid var(--accent);padding:12px 16px;border-radius:6px;background:linear-gradient(180deg,rgba(14,165,164,0.03),transparent)}
+    .muted{color:var(--muted)}
+    .row{display:flex;gap:12px;flex-wrap:wrap}
+    .col{flex:1 1 220px}
+    .param-table{width:100%;border-collapse:collapse;margin-top:12px}
+    .param-table th,.param-table td{padding:8px 10px;border:1px solid #eef2f7;text-align:left;font-size:13px}
+    footer{padding:18px;text-align:center;color:var(--muted);font-size:13px}
+    .download{display:inline-block;background:var(--accent);color:white;padding:8px 12px;border-radius:8px;text-decoration:none}
+    @media(max-width:880px){.grid{grid-template-columns:1fr}nav{order:2}.container{padding:12px}}
+  </style>
+</head>
+<body>
+<header>
+  <div class="container">
+    <h1 style="margin:0;font-size:22px">BambooPay — Full API Documentation (English)</h1>
+    <p style="margin:6px 0 0 0;opacity:0.95">Complete integration guide for BambooPay — Web payments, instant payments, callbacks, and status verification.</p>
+  </div>
+</header>
+
+<div class="container">
+  <div class="grid">
+    <nav>
+      <h3>Navigation</h3>
+      <a href="#overview">Overview</a>
+      <a href="#auth">Authentication</a>
+      <a href="#init-transaction">Web Payment – POST /send</a>
+      <a href="#instant-payment">Instant Payment – POST /mobile/instant-payment</a>
+      <a href="#callback">Callback (update_status_url)</a>
+      <a href="#check-status">Check Payment Status – POST /check-status/{id}</a>
+      <a href="#examples">Code Examples</a>
+      <a href="#download">Download PDF</a>
+    </nav>
+
+    <main>
+      <div class="card">
+
+        <!-- Overview -->
+        <section id="overview" class="section">
+          <div class="meta">
+            <div class="badge">Base URL</div>
+            <div><strong>https://client.bamboopay-ga.com/api</strong><div class="muted" style="font-size:13px">Version: v1 — Basic Authentication</div></div>
+          </div>
+          <p class="muted">This English documentation is a complete translation of the official BambooPay API integration guide. It covers: creating transactions, redirect payments, instant mobile money payments, callback notifications, and transaction status checks.</p>
+        </section>
+
+        <!-- Authentication -->
+        <section id="auth" class="section">
+          <h2>Authentication</h2>
+          <p class="muted">All endpoints require <strong>Basic Auth</strong> using your merchant credentials.</p>
+<pre><code>Authorization: Basic &lt;base64(username:password)&gt;</code></pre>
+          <p class="muted">Example invalid credentials response:</p>
+<pre><code>{
+  "message": "Unauthorized user or invalid credentials",
+  "code": 401
+}</code></pre>
+        </section>
+
+        <!-- Init Transaction -->
+        <section id="init-transaction" class="section">
+          <h2>1) Web Payment — Initiate a Transaction <span class="muted">POST /send</span></h2>
+          <div class="endpoint">
+            <div class="row">
+              <div class="col"><strong>URL</strong><div class="muted">POST /send</div></div>
+              <div class="col"><strong>Auth</strong><div class="muted">Basic Auth</div></div>
+              <div class="col"><strong>Returns</strong><div class="muted">Redirect URL</div></div>
+            </div>
+
+            <p>The merchant initiates a transaction before redirecting the user to the BambooPay payment gateway.</p>
+
+            <h4>Request Body</h4>
+            <table class="param-table">
+              <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>payerName</td><td>string</td><td>yes</td><td>Name of the payer</td></tr>
+                <tr><td>matricule</td><td>string</td><td>yes</td><td>Payer's ID or matricule</td></tr>
+                <tr><td>raisonSociale</td><td>string</td><td>no</td><td>Company / business name</td></tr>
+                <tr><td>billingId</td><td>string</td><td>yes</td><td>Merchant invoice reference</td></tr>
+                <tr><td>transactionAmount</td><td>string</td><td>yes</td><td>Amount to charge</td></tr>
+                <tr><td>merchant_id</td><td>string</td><td>yes</td><td>Your merchant identifier</td></tr>
+                <tr><td>phone</td><td>string</td><td>yes</td><td>Payer's phone number</td></tr>
+                <tr><td>return_url</td><td>string|null</td><td>no</td><td>URL user is redirected to after payment</td></tr>
+                <tr><td>update_status_url</td><td>string|null</td><td>no</td><td>Merchant callback URL for payment updates</td></tr>
+              </tbody>
+            </table>
+
+            <h4>Success Response</h4>
+<pre><code>{
+  "redirect_url": "https://client.bamboopay-ga.com/payment/..."
+}</code></pre>
+
+            <h4>Error Responses</h4>
+            <ul class="muted">
+              <li>401 — Invalid credentials</li>
+              <li>401 — Merchant not allowed</li>
+              <li>422 — Merchant ID invalid</li>
+              <li>422 — Missing required fields</li>
+            </ul>
+          </div>
+        </section>
+
+        <!-- Callback -->
+        <section id="callback" class="section">
+          <h2>Callback — update_status_url</h2>
+          <p>BambooPay automatically notifies the merchant of any transaction status change using the <strong>update_status_url</strong> field.</p>
+
+          <h4>Callback Payload</h4>
+<pre><code>{
+  "billingId": "string",
+  "status": "completed | failed | pending",
+  "typePaiement": "airtelMoney | moovMoney | visa | ...",
+  "ref": "BP transaction reference",
+  "numCpte": "phone or account used",
+  "observation": "optional notes"
+}</code></pre>
+        </section>
+
+        <!-- Instant Payment -->
+        <section id="instant-payment" class="section">
+          <h2>2) Instant Payment — <span class="muted">POST /mobile/instant-payment</span></h2>
+          <div class="endpoint">
+            <div class="row">
+              <div class="col"><strong>URL</strong><div class="muted">POST /mobile/instant-payment</div></div>
+              <div class="col"><strong>Auth</strong><div class="muted">Basic Auth</div></div>
+              <div class="col"><strong>Returns</strong><div class="muted">202 Accepted</div></div>
+            </div>
+
+            <p>Instant payments do not redirect the user. The payer only validates the payment by entering their Mobile Money PIN.</p>
+
+            <h4>Request Body</h4>
+            <table class="param-table">
+              <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+              <tbody>
+                <tr><td>phone</td><td>string</td><td>yes</td><td>Payer's phone number</td></tr>
+                <tr><td>amount</td><td>string</td><td>yes</td><td>Amount to charge</td></tr>
+                <tr><td>payer_name</td><td>string</td><td>yes</td><td>Name of payer</td></tr>
+                <tr><td>reference</td><td>string</td><td>yes</td><td>Merchant reference</td></tr>
+                <tr><td>merchant_id</td><td>string</td><td>yes</td><td>Merchant identifier</td></tr>
+                <tr><td>callback_url</td><td>string</td><td>yes</td><td>Callback URL</td></tr>
+                <tr><td>operateur</td><td>string|null</td><td>no</td><td>moov_money or airtel_money</td></tr>
+              </tbody>
+            </table>
+
+            <h4>Success Response (202)</h4>
+<pre><code>{
+  "reference_bp": "TXN-2025-000381",
+  "reference": "TT-0",
+  "status": true,
+  "message": null
+}</code></pre>
+          </div>
+        </section>
+
+        <!-- Check Status -->
+        <section id="check-status" class="section">
+          <h2>3) Check Status — <span class="muted">POST /check-status/{transaction_id}</span></h2>
+          <div class="endpoint">
+            <div class="row">
+              <div class="col"><strong>URL</strong><div class="muted">POST /check-status/{id}</div></div>
+              <div class="col"><strong>Auth</strong><div class="muted">Basic Auth</div></div>
+            </div>
+
+            <h4>Success Response</h4>
+<pre><code>{
+  "message": "OK",
+  "code": 200,
+  "transaction": {
+    "status": "failed",
+    "code": 200,
+    "message": "Status failed"
+  }
+}</code></pre>
+        </section>
+
+        <!-- Examples -->
+        <section id="examples" class="section">
+          <h2>Examples</h2>
+
+          <h4>cURL — Create transaction</h4>
+<pre><code>curl -X POST "https://client.bamboopay-ga.com/api/send" \ 
+  -H "Content-Type: application/json" \ 
+  -u "MERCHANT:SECRET" \ 
+  -d '{
+    "payerName": "John Doe",
+    "matricule": "ST102",
+    "billingId": "FAC-2025-01",
+    "transactionAmount": "5000",
+    "merchant_id": "MERC001",
+    "phone": "077000000",
+    "return_url": "https://my-site.com/return"
+  }'
+</code></pre>
+        </section>
+
+        <!-- Download -->
+        <section id="download" class="section">
+          <h2>Resources</h2>
+          <p class="muted">Original PDF documentation:</p>
+          <a class="download" href="/mnt/data/API_Bamboo_PAY-v8.pdf" target="_blank">Download PDF</a>
+        </section>
+
+      </div>
+
+      <footer>
+        BambooPay API • Complete English Documentation • © BambooPay
+      </footer>
+    </main>
+  </div>
+</div>
+</body>
+</html>

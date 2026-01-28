@@ -37,6 +37,7 @@ from routers import (
     cron_taxes,
     citoyen,
     services,
+    transactions_bamboopay,
 )
 from pathlib import Path
 import json
@@ -103,6 +104,7 @@ app.include_router(demandes_citoyens.router, prefix="/api/demandes-citoyens")
 app.include_router(cron_taxes.router)
 app.include_router(citoyen.router)
 app.include_router(services.router)
+app.include_router(transactions_bamboopay.router)
 
 # Servir les fichiers statiques (photos uploadées)
 uploads_dir = Path(__file__).parent / "uploads"

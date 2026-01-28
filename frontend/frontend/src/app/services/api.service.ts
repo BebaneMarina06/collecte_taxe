@@ -721,6 +721,44 @@ export class ApiService {
     return this.http.post(`${this.apiUrl}/client/paiement/verifier/${billingId}`, {});
   }
 
+  // ==================== TRANSACTIONS BAMBOOPAY (Admin) ====================
+
+  getTransactionsBambooPay(params?: {
+    skip?: number;
+    limit?: number;
+    statut?: string;
+    date_debut?: string;
+    date_fin?: string;
+    search?: string;
+    contribuable_id?: number;
+    taxe_id?: number;
+    payment_method?: string;
+    order_by?: string;
+  }): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/transactions-bamboopay`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  getTransactionBambooPay(id: number): Observable<any> {
+    return this.http.get(`${this.apiUrl}/transactions-bamboopay/${id}`);
+  }
+
+  getTransactionBambooPayByBillingId(billingId: string): Observable<any> {
+    return this.http.get(`${this.apiUrl}/transactions-bamboopay/by-billing-id/${billingId}`);
+  }
+
+  getTransactionsBambooPayStats(params?: {
+    date_debut?: string;
+    date_fin?: string;
+  }): Observable<any> {
+    const httpParams = params ? createHttpParams(params) : new HttpParams();
+    return this.http.get(`${this.apiUrl}/transactions-bamboopay/stats`, httpParams.keys().length > 0 ? { params: httpParams } : {});
+  }
+
+  refreshTransactionBambooPay(id: number): Observable<any> {
+    return this.http.post(`${this.apiUrl}/transactions-bamboopay/${id}/refresh`, {});
+  }
+
   // ==================== CARTOGRAPHIE ====================
   
   getStatistiquesCartographie(params?: any): Observable<any> {
