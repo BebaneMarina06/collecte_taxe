@@ -37,6 +37,122 @@ class LoginPhoneRequest(BaseModel):
     password: str
 
 
+class RegisterRequest(BaseModel):
+    nom: str
+    prenom: Optional[str] = None
+    email: Optional[EmailStr] = None
+    telephone: str
+    password: str
+    adresse: Optional[str] = None
+    type_contribuable_id: Optional[int] = None
+    quartier_id: Optional[int] = None
+
+
+@router.post("/register", status_code=201)
+def register_citoyen(
+    register_data: RegisterRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Inscription d'un nouveau citoyen (contribuable)
+    """
+    # Vérifier si le téléphone existe déjà
+    existing_phone = db.query(Contribuable).filter(
+        Contribuable.telephone == register_data.telephone
+    ).first()
+    if existing_phone:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Ce numéro de téléphone est déjà utilisé"
+        )
+
+    # Vérifier si l'email existe déjà
+    if register_data.email:
+        existing_email = db.query(Contribuable).filter(
+            Contribuable.email == register_data.email
+        ).first()
+        if existing_email:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Cet email est déjà utilisé"
+            )
+
+    # Récupérer les valeurs par défaut si non fournies
+    type_contribuable_id = register_data.type_contribuable_id
+    if not type_contribuable_id:
+        # Prendre le premier type de contribuable par défaut
+        from database.models import TypeContribuable
+        default_type = db.query(TypeContribuable).first()
+        if default_type:
+            type_contribuable_id = default_type.id
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Aucun type de contribuable configuré"
+            )
+
+    quartier_id = register_data.quartier_id
+    if not quartier_id:
+        # Prendre le premier quartier par défaut
+        from database.models import Quartier
+        default_quartier = db.query(Quartier).first()
+        if default_quartier:
+            quartier_id = default_quartier.id
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="Aucun quartier configuré"
+            )
+
+    # Prendre le premier collecteur par défaut
+    from database.models import Collecteur
+    default_collecteur = db.query(Collecteur).filter(Collecteur.actif == True).first()
+    if not default_collecteur:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Aucun collecteur actif configuré"
+        )
+
+    # Créer le contribuable
+    nouveau_contribuable = Contribuable(
+        nom=register_data.nom,
+        prenom=register_data.prenom,
+        email=register_data.email,
+        telephone=register_data.telephone,
+        adresse=register_data.adresse,
+        type_contribuable_id=type_contribuable_id,
+        quartier_id=quartier_id,
+        collecteur_id=default_collecteur.id,
+        mot_de_passe_hash=get_password_hash(register_data.password),
+        actif=True
+    )
+
+    db.add(nouveau_contribuable)
+    db.commit()
+    db.refresh(nouveau_contribuable)
+
+    # Créer le token
+    access_token_expires = timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={"sub": str(nouveau_contribuable.id), "telephone": nouveau_contribuable.telephone, "role": "citoyen"},
+        expires_delta=access_token_expires
+    )
+
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "contribuable": {
+            "id": nouveau_contribuable.id,
+            "nom": nouveau_contribuable.nom,
+            "prenom": nouveau_contribuable.prenom,
+            "telephone": nouveau_contribuable.telephone,
+            "email": nouveau_contribuable.email,
+            "adresse": nouveau_contribuable.adresse
+        },
+        "message": "Inscription réussie"
+    }
+
+
 @router.post("/login")
 def login_citoyen(
     login_data: LoginPhoneRequest,
