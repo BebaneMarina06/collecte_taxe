@@ -29,6 +29,7 @@ export class ClientsTableComponent implements OnInit, OnDestroy {
   activeModalTaxations: ModelSignal<boolean> = model<boolean>(false);
   
   @Output() clientCreated = new EventEmitter<void>();
+  @Output() editClient = new EventEmitter<Contribuable>();
   
   private apiService = inject(ApiService);
   private syncService = inject(SyncService);
@@ -226,5 +227,9 @@ export class ClientsTableComponent implements OnInit, OnDestroy {
   closeTaxationsModal(): void {
     this.activeModalTaxations.set(false);
     this.selectedContribuable = null;
+  }
+
+  editContribuable(contribuable: Contribuable): void {
+    this.editClient.emit(contribuable);
   }
 }

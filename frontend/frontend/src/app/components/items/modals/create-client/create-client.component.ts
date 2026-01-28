@@ -1,8 +1,8 @@
-import { Component, EventEmitter, Output, OnInit, inject, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
+import { Component, EventEmitter, Output, OnInit, inject, ViewChild, ElementRef, AfterViewInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ApiService } from '../../../../services/api.service';
-import { ContribuableCreate } from '../../../../interfaces/contribuable.interface';
+import { ContribuableCreate, Contribuable } from '../../../../interfaces/contribuable.interface';
 import { Zone } from '../../../../interfaces/zone.interface';
 import { Quartier } from '../../../../interfaces/quartier.interface';
 import { TypeContribuable } from '../../../../interfaces/type-contribuable.interface';
@@ -16,14 +16,16 @@ import { Collecteur } from '../../../../interfaces/collecteur.interface';
   styleUrl: './create-client.component.scss'
 })
 export class CreateClientComponent implements OnInit, AfterViewInit {
+  @Input() contribuable: Contribuable | null = null;
   @Output() clientCreated = new EventEmitter<void>();
   @ViewChild('modalContent', { static: false }) modalContentRef!: ElementRef<HTMLElement>;
-  
+
   private apiService = inject(ApiService);
-  
+
   activeEmail: boolean = false;
   loading: boolean = false;
   error: string = '';
+  isEditMode: boolean = false;
   
   // Form data
   formData: ContribuableCreate = {
@@ -66,6 +68,37 @@ export class CreateClientComponent implements OnInit, AfterViewInit {
   ngOnInit(): void {
     this.loadOptions();
     this.checkGeolocationSupport();
+
+    // Mode édition si un contribuable est passé en entrée
+    if (this.contribuable) {
+      this.isEditMode = true;
+      this.activeEmail = !!this.contribuable.email;
+      this.formData = {
+        nom: this.contribuable.nom || '',
+        prenom: this.contribuable.prenom || '',
+        email: this.contribuable.email || '',
+        telephone: this.contribuable.telephone || '',
+        type_contribuable_id: this.contribuable.type_contribuable_id || 0,
+        quartier_id: this.contribuable.quartier_id || 0,
+        collecteur_id: this.contribuable.collecteur_id || 0,
+        adresse: this.contribuable.adresse || '',
+        nom_activite: this.contribuable.nom_activite || '',
+        photo_url: this.contribuable.photo_url || '',
+        numero_identification: this.contribuable.numero_identification || '',
+        latitude: this.contribuable.latitude,
+        longitude: this.contribuable.longitude,
+        actif: this.contribuable.actif !== undefined ? this.contribuable.actif : true
+      };
+      // Charger la photo existante si disponible
+      if (this.contribuable.photo_url) {
+        this.photoPreview = this.contribuable.photo_url;
+      }
+      // Charger les quartiers de la zone du contribuable
+      if (this.contribuable.quartier?.zone_id) {
+        this.selectedZoneId = this.contribuable.quartier.zone_id;
+        this.onZoneChange(this.selectedZoneId);
+      }
+    }
   }
 
   ngAfterViewInit(): void {
@@ -317,8 +350,8 @@ export class CreateClientComponent implements OnInit, AfterViewInit {
           data.photo_url = uploadResponse.url.startsWith('http') 
             ? uploadResponse.url 
             : `${apiBaseUrl}${uploadResponse.url}`;
-          // Continuer avec la création du contribuable
-          this.createContribuableWithData(data);
+          // Continuer avec la sauvegarde du contribuable
+          this.saveContribuableWithData(data);
         },
         error: (err) => {
           this.loading = false;
@@ -327,63 +360,75 @@ export class CreateClientComponent implements OnInit, AfterViewInit {
           console.error('Erreur upload photo:', err);
         }
       });
-      return; // Sortir, la création se fera dans le callback
+      return; // Sortir, la sauvegarde se fera dans le callback
     }
 
-    // Si pas de photo, créer directement
-    this.createContribuableWithData(data);
+    // Si pas de photo, sauvegarder directement
+    this.saveContribuableWithData(data);
   }
 
-  private createContribuableWithData(data: any): void {
+  private saveContribuableWithData(data: any): void {
     // Réinitialiser le message d'erreur avant la requête
     this.error = '';
-    
-    this.apiService.createContribuable(data).subscribe({
-      next: (response) => {
-        console.log('Contribuable créé avec succès:', response);
-        // S'assurer que le message d'erreur est effacé avant d'émettre l'événement
-        this.error = '';
-        this.loading = false;
-        // Faire défiler vers le haut pour voir le message de succès (s'il y en a un)
-        setTimeout(() => {
-          this.scrollToTop();
-        }, 50);
-        // Émettre l'événement pour fermer le modal
-        this.clientCreated.emit();
-        // Réinitialiser le formulaire après un court délai pour permettre la fermeture du modal
-        setTimeout(() => {
-          this.resetForm();
-        }, 100);
-      },
-      error: (err) => {
-        this.loading = false;
-        // Vérifier si c'est vraiment une erreur ou une réponse inattendue
-        console.error('Erreur création contribuable - Détails complets:', {
-          status: err.status,
-          statusText: err.statusText,
-          error: err.error,
-          message: err.message
-        });
-        
-        // Si le status est 201 (Created), c'est un succès malgré l'erreur
-        if (err.status === 201 || (err.error && typeof err.error === 'object' && 'id' in err.error)) {
-          console.log('Création réussie malgré le traitement comme erreur');
+
+    // Mode édition ou création
+    if (this.isEditMode && this.contribuable) {
+      this.apiService.updateContribuable(this.contribuable.id, data).subscribe({
+        next: (response) => {
+          console.log('Contribuable mis à jour avec succès:', response);
           this.error = '';
+          this.loading = false;
+          this.clientCreated.emit();
+        },
+        error: (err) => {
+          this.loading = false;
+          const errorMessage = err.error?.detail || err.error?.message || err.message || 'Erreur lors de la mise à jour du contribuable';
+          this.error = errorMessage;
+          console.error('Erreur mise à jour contribuable:', err);
+          this.scrollToTop();
+        }
+      });
+    } else {
+      this.apiService.createContribuable(data).subscribe({
+        next: (response) => {
+          console.log('Contribuable créé avec succès:', response);
+          this.error = '';
+          this.loading = false;
+          setTimeout(() => {
+            this.scrollToTop();
+          }, 50);
           this.clientCreated.emit();
           setTimeout(() => {
             this.resetForm();
           }, 100);
-          return;
+        },
+        error: (err) => {
+          this.loading = false;
+          console.error('Erreur création contribuable - Détails complets:', {
+            status: err.status,
+            statusText: err.statusText,
+            error: err.error,
+            message: err.message
+          });
+
+          if (err.status === 201 || (err.error && typeof err.error === 'object' && 'id' in err.error)) {
+            console.log('Création réussie malgré le traitement comme erreur');
+            this.error = '';
+            this.clientCreated.emit();
+            setTimeout(() => {
+              this.resetForm();
+            }, 100);
+            return;
+          }
+
+          const errorMessage = err.error?.detail || err.error?.message || err.message || 'Erreur lors de la création du contribuable';
+          this.error = errorMessage;
+          setTimeout(() => {
+            this.scrollToTop();
+          }, 50);
         }
-        
-        const errorMessage = err.error?.detail || err.error?.message || err.message || 'Erreur lors de la création du contribuable';
-        this.error = errorMessage;
-        // Faire défiler vers le haut pour voir le message d'erreur
-        setTimeout(() => {
-          this.scrollToTop();
-        }, 50);
-      }
-    });
+      });
+    }
   }
 
   resetForm(): void {
