@@ -3,14 +3,12 @@ services:
     name: collecte-taxe-frontend
     env: static
 
-    rootDir: frontend/frontend
+    # Pas de rootDir
 
-    buildCommand: npm install && npm run build && ls -la dist/ && ls -la dist/collecte-taxe/ && ls -la dist/collecte-taxe/browser/
+    buildCommand: cd frontend/frontend && npm install && npm run build
 
-    # Le chemin est relatif au rootDir (frontend/frontend)
-    staticPublishPath: dist/collecte-taxe/browser
+    staticPublishPath: frontend/frontend/dist/collecte-taxe/browser
 
-    # Ajoutez ces règles de redirection
     routes:
       - type: rewrite
         source: /*
