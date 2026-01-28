@@ -18,11 +18,9 @@ class BambooPayService:
     def __init__(self):
         self.base_url = os.getenv("BAMBOOPAY_BASE_URL", "https://client.bamboopay-ga.com/api")
         # Par convention BambooPay : le « Numéro du marchand » sert également de username Basic Auth
-        default_merchant_number = "6008889"
-        default_password = "12345678"
-        self.merchant_id = os.getenv("BAMBOOPAY_MERCHANT_ID", default_merchant_number)
-        self.merchant_secret = os.getenv("BAMBOOPAY_MERCHANT_SECRET", default_password)
-        self.merchant_username = os.getenv("BAMBOOPAY_MERCHANT_USERNAME", self.merchant_id)
+        self.merchant_id = "6008889"
+        self.merchant_secret = "12345678"
+        self.merchant_username = "6008889"
         self.debug_mode = os.getenv("BAMBOOPAY_DEBUG", "false").lower() == "true"
         
         # Version correcte (celle du repo)
