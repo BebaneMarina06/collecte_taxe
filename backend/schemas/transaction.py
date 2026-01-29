@@ -70,3 +70,4 @@ class PaiementBambooPayRequest(BaseModel):
     payer_name: str = Field(..., max_length=200, description="Nom du payeur")
     phone: str = Field(..., max_length=20, description="Numéro de téléphone du payeur")
     reference: str = Field(..., description="Référence de la transaction")
+    merchant_secret: Optional[str] = Field(None, description="Secret du marchand (optionnel, utilise les credentials par défaut si non fourni)")

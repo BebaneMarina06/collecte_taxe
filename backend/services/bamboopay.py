@@ -122,6 +122,23 @@ class BambooPayService:
                 "code": 500
             }
     
+    def _get_auth_header_for_merchant(self, merchant_id: Optional[str] = None, merchant_secret: Optional[str] = None) -> str:
+        """Génère l'en-tête d'authentification Basic pour un merchant spécifique"""
+        # Utiliser les credentials fournis ou les credentials par défaut
+        merchant_username = merchant_id or self.merchant_username
+        merchant_password = merchant_secret or self.merchant_secret
+        
+        credentials = f"{merchant_username}:{merchant_password}"
+        encoded = base64.b64encode(credentials.encode()).decode()
+        return f"Basic {encoded}"
+    
+    def _get_headers_for_merchant(self, merchant_id: Optional[str] = None, merchant_secret: Optional[str] = None) -> Dict[str, str]:
+        """Retourne les en-têtes HTTP pour les requêtes avec un merchant spécifique"""
+        return {
+            "Content-Type": "application/json",
+            "Authorization": self._get_auth_header_for_merchant(merchant_id, merchant_secret)
+        }
+    
     async def paiement_instantane(
         self,
         phone: str,
@@ -130,15 +147,17 @@ class BambooPayService:
         reference: str,
         callback_url: str,
         operateur: Optional[str] = None,
-        merchant_id: Optional[str] = None
+        merchant_id: Optional[str] = None,
+        merchant_secret: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Effectue un paiement instantané via mobile money
         """
         url = f"{self.base_url}/mobile/instant-payment"
         
-        # Utiliser le merchant_id fourni ou celui par défaut
-        merchant_id_to_use = merchant_id or self.merchant_id
+        # TOUJOURS utiliser le merchant_id par défaut (6008889) pour l'authentification et le payload
+        # Le merchant_id fourni dans la requête est ignoré pour garantir la cohérence
+        merchant_id_to_use = self.merchant_id
         
         payload = {
             "phone": phone,
@@ -155,13 +174,16 @@ class BambooPayService:
         if self.debug_mode:
             logger.info(f"Appel BambooPay /mobile/instant-payment: {url}")
             logger.debug(f"Payload: {payload}")
+            logger.debug(f"Merchant ID utilisé (toujours 6008889): {merchant_id_to_use}")
+            if merchant_id and merchant_id != self.merchant_id:
+                logger.warning(f"Merchant ID fourni ({merchant_id}) ignoré, utilisation de {self.merchant_id}")
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
                 response = await client.post(
                     url,
                     json=payload,
-                    headers=self._get_headers()
+                    headers=self._get_headers_for_merchant(merchant_id_to_use, merchant_secret)
                 )
                 
                 if response.status_code == 202:

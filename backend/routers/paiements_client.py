@@ -339,11 +339,15 @@ async def initier_paiement_bamboopay_instant(
 ):
     """
     Initie un paiement instantané BambooPay avec le format standard
+    
+    Note: Le merchant_id est toujours 6008889 (valeur par défaut).
+    Si un merchant_id différent est fourni dans la requête, il sera ignoré.
+    
     Format attendu:
     {
         "amount": "1000",
         "callback_url": "https://mobile-pos.phonedata.net/milentel/callback",
-        "merchant_id": "6005896",
+        "merchant_id": "6008889",  // Optionnel, toujours 6008889 de toute façon
         "operateur": "airtel_money",
         "payer_name": "Estelle MVE",
         "phone": "077355600",
@@ -363,7 +367,8 @@ async def initier_paiement_bamboopay_instant(
         reference=data.reference,
         callback_url=data.callback_url,
         operateur=data.operateur,
-        merchant_id=data.merchant_id
+        merchant_id=data.merchant_id,
+        merchant_secret=data.merchant_secret
     )
     
     if not result.get("success"):
