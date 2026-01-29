@@ -153,6 +153,8 @@ class BambooPayService:
         """
         Effectue un paiement instantané via mobile money
         """
+        # Endpoint standard selon la documentation: POST /mobile/instant-payment
+        # L'URL de base est déjà https://client.bamboopay-ga.com/api
         url = f"{self.base_url}/mobile/instant-payment"
         
         # TOUJOURS utiliser le merchant_id par défaut (6008889) pour l'authentification et le payload
@@ -171,12 +173,13 @@ class BambooPayService:
         if operateur:
             payload["operateur"] = operateur
         
-        if self.debug_mode:
-            logger.info(f"Appel BambooPay /mobile/instant-payment: {url}")
-            logger.debug(f"Payload: {payload}")
-            logger.debug(f"Merchant ID utilisé (toujours 6008889): {merchant_id_to_use}")
-            if merchant_id and merchant_id != self.merchant_id:
-                logger.warning(f"Merchant ID fourni ({merchant_id}) ignoré, utilisation de {self.merchant_id}")
+        # Toujours logger les détails pour le débogage
+        logger.info(f"Appel BambooPay /mobile/instant-payment: {url}")
+        logger.info(f"Payload: {payload}")
+        logger.info(f"Merchant ID utilisé (toujours 6008889): {merchant_id_to_use}")
+        logger.info(f"Headers: {self._get_headers_for_merchant(merchant_id_to_use, merchant_secret)}")
+        if merchant_id and merchant_id != self.merchant_id:
+            logger.warning(f"Merchant ID fourni ({merchant_id}) ignoré, utilisation de {self.merchant_id}")
         
         try:
             async with httpx.AsyncClient(timeout=30.0) as client:
@@ -185,6 +188,10 @@ class BambooPayService:
                     json=payload,
                     headers=self._get_headers_for_merchant(merchant_id_to_use, merchant_secret)
                 )
+                
+                logger.info(f"Réponse BambooPay - Status: {response.status_code}")
+                logger.info(f"Réponse BambooPay - Headers: {dict(response.headers)}")
+                logger.info(f"Réponse BambooPay - Body: {response.text[:500]}")
                 
                 if response.status_code == 202:
                     data = response.json()
@@ -202,14 +209,26 @@ class BambooPayService:
                     try:
                         error_data = response.json()
                     except:
-                        error_data = {"message": response.text}
+                        error_data = {"message": response.text, "raw_response": response.text[:1000]}
                     
-                    logger.error(f"Erreur BambooPay /mobile/instant-payment ({response.status_code}): {error_data}")
+                    logger.error(f"Erreur BambooPay /mobile/instant-payment ({response.status_code})")
+                    logger.error(f"URL appelée: {url}")
+                    logger.error(f"Payload envoyé: {payload}")
+                    logger.error(f"Headers envoyés: {self._get_headers_for_merchant(merchant_id_to_use, merchant_secret)}")
+                    logger.error(f"Réponse complète: {error_data}")
+                    
+                    # Si erreur 405, suggérer des solutions
+                    if response.status_code == 405:
+                        error_msg = f"Erreur 405 - Méthode non autorisée. L'endpoint '{url}' pourrait ne pas exister ou accepter POST. Vérifiez l'URL de l'API BambooPay."
+                    else:
+                        error_msg = error_data.get("message", f"Erreur {response.status_code}")
+                    
                     return {
                         "success": False,
-                        "error": error_data.get("message", f"Erreur {response.status_code}"),
+                        "error": error_msg,
                         "code": response.status_code,
-                        "data": error_data
+                        "data": error_data,
+                        "url_called": url
                     }
         except httpx.TimeoutException:
             logger.error("Timeout lors de l'appel à BambooPay")
