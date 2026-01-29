@@ -60,3 +60,13 @@ class CallbackData(BaseModel):
     message: Optional[str] = None
     amount: Optional[str] = None
 
+
+class PaiementBambooPayRequest(BaseModel):
+    """Schéma pour initier un paiement BambooPay avec le format standard"""
+    amount: str = Field(..., description="Montant de la transaction")
+    callback_url: str = Field(..., description="URL de callback pour les notifications")
+    merchant_id: str = Field(..., description="Identifiant du marchand")
+    operateur: Optional[str] = Field(None, description="Opérateur mobile money (airtel_money, moov_money)")
+    payer_name: str = Field(..., max_length=200, description="Nom du payeur")
+    phone: str = Field(..., max_length=20, description="Numéro de téléphone du payeur")
+    reference: str = Field(..., description="Référence de la transaction")

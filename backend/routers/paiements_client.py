@@ -10,7 +10,7 @@ from sqlalchemy import func
 from typing import List, Optional
 from database.database import get_db
 from database.models import Taxe, TransactionBambooPay, StatutTransactionEnum, AffectationTaxe, Contribuable
-from schemas.transaction import TransactionCreate, TransactionResponse, TransactionStatusResponse, CallbackData
+from schemas.transaction import TransactionCreate, TransactionResponse, TransactionStatusResponse, CallbackData, PaiementBambooPayRequest
 from services.bamboopay import bamboopay_service
 from datetime import datetime
 import uuid
@@ -369,3 +369,74 @@ async def initier_paiement_bamboopay(data: PaiementRequest, db: Session = Depend
     db.refresh(transaction)
 
     return {"redirect_url": result["redirect_url"], "transaction_id": transaction.id}
+
+
+@router.post("/paiement/bamboopay/instant")
+async def initier_paiement_bamboopay_instant(
+    data: PaiementBambooPayRequest,
+    db: Session = Depends(get_db)
+):
+    """
+    Initie un paiement instantané BambooPay avec le format standard
+    Format attendu:
+    {
+        "amount": "1000",
+        "callback_url": "https://mobile-pos.phonedata.net/milentel/callback",
+        "merchant_id": "6005896",
+        "operateur": "airtel_money",
+        "payer_name": "Estelle MVE",
+        "phone": "077355600",
+        "reference": "DEM-41"
+    }
+    """
+    logger.info(f"Initiation paiement instantané BambooPay: {data.reference}")
+    
+    # Générer un billing_id si nécessaire (utiliser la référence fournie)
+    billing_id = data.reference
+    
+    # Initier le paiement instantané via BambooPay
+    result = await bamboopay_service.paiement_instantane(
+        phone=data.phone,
+        amount=data.amount,
+        payer_name=data.payer_name,
+        reference=data.reference,
+        callback_url=data.callback_url,
+        operateur=data.operateur,
+        merchant_id=data.merchant_id
+    )
+    
+    if not result.get("success"):
+        logger.error(f"Erreur lors de l'initiation du paiement: {result.get('error')}")
+        raise HTTPException(
+            status_code=400,
+            detail=result.get("error", "Erreur lors de l'initiation du paiement BambooPay")
+        )
+    
+    # Enregistrer la transaction en base de données
+    db_transaction = TransactionBambooPay(
+        payer_name=data.payer_name,
+        phone=data.phone,
+        billing_id=billing_id,
+        transaction_amount=float(data.amount),
+        statut=StatutTransactionEnum.PENDING,
+        date_initiation=datetime.utcnow(),
+        callback_url=data.callback_url,
+        reference_bp=result.get("reference_bp"),
+        operateur=data.operateur,
+        payment_method="mobile_instant"
+    )
+    db.add(db_transaction)
+    db.commit()
+    db.refresh(db_transaction)
+    
+    logger.info(f"Paiement initié avec succès. Reference BP: {result.get('reference_bp')}")
+    
+    return {
+        "success": True,
+        "reference_bp": result.get("reference_bp"),
+        "reference": result.get("reference", data.reference),
+        "status": result.get("status", True),
+        "message": result.get("message", "Paiement instantané initié avec succès"),
+        "transaction_id": db_transaction.id,
+        "billing_id": billing_id
+    }

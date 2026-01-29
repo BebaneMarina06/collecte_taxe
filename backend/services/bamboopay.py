@@ -129,19 +129,23 @@ class BambooPayService:
         payer_name: str,
         reference: str,
         callback_url: str,
-        operateur: Optional[str] = None
+        operateur: Optional[str] = None,
+        merchant_id: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Effectue un paiement instantané via mobile money
         """
         url = f"{self.base_url}/mobile/instant-payment"
         
+        # Utiliser le merchant_id fourni ou celui par défaut
+        merchant_id_to_use = merchant_id or self.merchant_id
+        
         payload = {
             "phone": phone,
             "amount": str(amount),
             "payer_name": payer_name,
             "reference": reference,
-            "merchant_id": self.merchant_id,
+            "merchant_id": merchant_id_to_use,
             "callback_url": callback_url
         }
         
