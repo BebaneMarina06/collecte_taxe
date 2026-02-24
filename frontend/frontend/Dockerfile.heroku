@@ -1,0 +1,40 @@
+# Stage 1: Builder Angular
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copier les fichiers de dépendances
+COPY package.json package-lock.json ./
+
+# Installer les dépendances
+RUN npm ci
+
+# Copier le code source
+COPY . .
+
+# Construire l'application
+RUN npm run build
+
+# Stage 2: Serveur web
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Installer serve pour servir l'application
+RUN npm install -g serve
+
+# Copier les fichiers compilés du builder
+COPY --from=builder /app/dist ./dist
+
+# Créer un simple serveur Node pour servir les statiques
+COPY server.js ./
+
+# Port Heroku
+EXPOSE $PORT
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD node -e "http.get('http://localhost:' + (process.env.PORT || 3000), (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+
+# Démarrer le serveur
+CMD ["node", "server.js"]

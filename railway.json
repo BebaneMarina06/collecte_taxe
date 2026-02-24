@@ -1,0 +1,22 @@
+{
+  "$schema": "https://railway.app/railway.schema.json",
+  "build": {
+    "builder": "DOCKERFILE",
+    "buildCommand": null
+  },
+  "deploy": {
+    "startCommand": "cd backend && uvicorn main:app --host 0.0.0.0 --port $PORT",
+    "restartPolicyMaxRetries": 5
+  },
+  "environmentVariables": {
+    "ENVIRONMENT": "production",
+    "DEBUG": "False",
+    "PYTHONUNBUFFERED": "1",
+    "PYTHONDONTWRITEBYTECODE": "1"
+  },
+  "plugins": [
+    {
+      "source": "https://github.com/railwayapp/starters/tree/main/plugins/postgres"
+    }
+  ]
+}

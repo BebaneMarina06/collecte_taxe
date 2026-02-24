@@ -1,0 +1,22 @@
+# Ajouter express et compression au package.json du frontend
+# Exécute: npm install express compression --save
+
+{
+  "name": "collecte-taxe-frontend",
+  "version": "1.0.0",
+  "scripts": {
+    "ng": "ng",
+    "start": "ng serve",
+    "build": "ng build --configuration production",
+    "build:dev": "ng build --configuration development",
+    "watch": "ng build --watch --configuration development",
+    "test": "ng test",
+    "heroku-build": "npm run build"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=9.0.0"
+  },
+  "private": true,
+  "dependencies": {}
+}

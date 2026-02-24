@@ -1,0 +1,79 @@
+{
+  "name": "Collecte Taxe Municipale",
+  "description": "Application de gestion de collecte de taxes municipales - Mairie de Libreville",
+  "keywords": ["fastapi", "angular", "postgresql", "postgis", "taxes"],
+  "repository": "https://github.com/votre-repo/collecte-taxe",
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    },
+    {
+      "url": "heroku/nodejs"
+    }
+  ],
+  "env": {
+    "SECRET_KEY": {
+      "description": "Clé secrète JWT (générez une chaîne aléatoire sécurisée)",
+      "generator": "secret"
+    },
+    "ENVIRONMENT": {
+      "description": "Environnement (production, staging, development)",
+      "value": "production"
+    },
+    "CORS_ORIGINS": {
+      "description": "Origines CORS autorisées (ex: https://frontend.herokuapp.com)",
+      "required": true
+    },
+    "BAMBOOPAY_MERCHANT_ID": {
+      "description": "ID marchand BambooPay",
+      "required": false
+    },
+    "BAMBOOPAY_MERCHANT_SECRET": {
+      "description": "Secret marchant BambooPay",
+      "required": false,
+      "sensitive": true
+    },
+    "BAMBOOPAY_MERCHANT_USERNAME": {
+      "description": "Nom utilisateur BambooPay",
+      "required": false
+    },
+    "SMTP_HOST": {
+      "description": "Serveur SMTP pour les emails",
+      "value": "smtp.gmail.com",
+      "required": false
+    },
+    "SMTP_PORT": {
+      "description": "Port SMTP",
+      "value": "587",
+      "required": false
+    },
+    "SMTP_USER": {
+      "description": "Utilisateur SMTP",
+      "required": false
+    },
+    "SMTP_PASSWORD": {
+      "description": "Mot de passe SMTP",
+      "required": false,
+      "sensitive": true
+    },
+    "SMTP_FROM": {
+      "description": "Email d'envoi",
+      "required": false
+    }
+  },
+  "addons": [
+    {
+      "plan": "heroku-postgresql:standard-0",
+      "as": "DATABASE"
+    }
+  ],
+  "formation": {
+    "web": {
+      "quantity": 1,
+      "size": "standard-1x"
+    }
+  },
+  "scripts": {
+    "postdeploy": "python database/init_db.py && python database/run_seeders.py"
+  }
+}

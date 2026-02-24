@@ -1,0 +1,13 @@
+# Configuration Railway pour Frontend
+
+```
+# Railway détecte automatiquement le Dockerfile dans frontend/frontend/
+# Et utilise ce Procfile pour le lancement:
+```
+
+web: npm run build && node server.js
+
+# Les variables d'environnement disponibles:
+# API_BASE_URL=https://backend-XXXX.railway.app/api (injectée par Railway)
+# NODE_ENV=production
+# PORT=3000

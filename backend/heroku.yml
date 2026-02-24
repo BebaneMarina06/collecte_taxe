@@ -1,0 +1,14 @@
+build:
+  docker:
+    web: Dockerfile
+  config:
+    BUILDPACK_URL: heroku/python
+    
+release:
+  image: web
+  command:
+    - python database/init_db.py
+    - python database/run_seeders.py
+
+run:
+  web: uvicorn main:app --host 0.0.0.0 --port $PORT
