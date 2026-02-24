@@ -18,13 +18,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Copier requirements en premier
-COPY requirements.txt .
+# Copier requirements du backend
+COPY backend/requirements.txt .
 RUN pip install --upgrade pip setuptools wheel && \
     pip install -r requirements.txt
 
-# Copier tout le code
-COPY . .
+# Copier tout le code backend
+COPY backend/ .
 
 # Port dynamique Heroku/Railway
 EXPOSE 8000
@@ -35,5 +35,3 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
 
 # Commande de démarrage - Railway injecte $PORT automatiquement
 CMD exec uvicorn main:app --host 0.0.0.0 --port ${PORT:-8000}
-
-
