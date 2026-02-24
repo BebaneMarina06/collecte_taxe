@@ -115,8 +115,13 @@ app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 @app.on_event("startup")
 async def startup_event():
     """Initialise la base de données au démarrage et configure le scheduler CRON"""
-    init_db()
-    print(" Base de données initialisée")
+    # Essayer d'initialiser la BD, mais ne pas bloquer le démarrage si elle n'existe pas
+    try:
+        init_db()
+        print("✅ Base de données initialisée")
+    except Exception as e:
+        print(f"⚠️  Base de données non disponible au démarrage: {str(e)}")
+        print("   Vous devrez exécuter manuellement: python database/init_db.py")
     
     # Configurer le scheduler pour les tâches CRON
     try:
@@ -147,13 +152,13 @@ async def startup_event():
         )
         
         scheduler.start()
-        print("Scheduler CRON configuré pour la génération mensuelle des dettes")
+        print("✅ Scheduler CRON configuré pour la génération mensuelle des dettes")
 
     except ImportError:
-        print("APScheduler non installé. Les tâches CRON ne seront pas automatiques.")
+        print("⚠️  APScheduler non installé. Les tâches CRON ne seront pas automatiques.")
         print("   Installez avec: pip install apscheduler")
     except Exception as e:
-        print(f"Erreur lors de la configuration du scheduler: {str(e)}")
+        print(f"⚠️  Erreur lors de la configuration du scheduler: {str(e)}")
 
 
 @app.get("/")
