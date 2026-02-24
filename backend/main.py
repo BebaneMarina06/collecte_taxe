@@ -42,12 +42,33 @@ from routers import (
 from pathlib import Path
 import json
 
+# Flag pour tracker l'initialisation de la BD
+db_initialized = False
+
 app = FastAPI(
     title="API Collecte Taxe Municipale",
     description="API pour la gestion de la collecte de taxes municipales - Mairie de Libreville",
     version="1.0.0",
     redirect_slashes=False
 )
+
+# Middleware pour initialiser la BD à la première requête
+@app.middleware("http")
+async def init_db_on_first_request(request: Request, call_next):
+    """Initialise la BD à la première requête si pas déjà fait"""
+    global db_initialized
+    
+    if not db_initialized:
+        try:
+            init_db()
+            db_initialized = True
+            print("✅ Base de données initialisée avec succès")
+        except Exception as e:
+            print(f"⚠️  Tentative d'initialisation de la BD échouée: {str(e)}")
+            db_initialized = True  # Ne pas réessayer à chaque requête
+    
+    response = await call_next(request)
+    return response
 
 # Middleware pour forcer l'encodage UTF-8 dans les réponses
 @app.middleware("http")
@@ -114,14 +135,8 @@ app.mount("/uploads", StaticFiles(directory=str(uploads_dir)), name="uploads")
 
 @app.on_event("startup")
 async def startup_event():
-    """Initialise la base de données au démarrage et configure le scheduler CRON"""
-    # Essayer d'initialiser la BD, mais ne pas bloquer le démarrage si elle n'existe pas
-    try:
-        init_db()
-        print("✅ Base de données initialisée")
-    except Exception as e:
-        print(f"⚠️  Base de données non disponible au démarrage: {str(e)}")
-        print("   Vous devrez exécuter manuellement: python database/init_db.py")
+    """Configure le scheduler CRON (la BD sera initialisée à la première requête)"""
+    print("🚀 Application en démarrage...")
     
     # Configurer le scheduler pour les tâches CRON
     try:
@@ -175,3 +190,34 @@ async def root():
 async def health_check():
     """Vérification de santé de l'API"""
     return {"status": "healthy"}
+
+
+@app.post("/admin/init-db")
+async def init_database():
+    """
+    Initialiser la base de données manuellement.
+    ⚠️ À utiliser en production avec prudence!
+    """
+    global db_initialized
+    
+    try:
+        init_db()
+        
+        # Charger les seeders
+        try:
+            from database.run_seeders import run_all_seeders
+            run_all_seeders()
+            print("✅ Seeders chargés avec succès")
+        except Exception as e:
+            print(f"⚠️  Erreur lors du chargement des seeders: {str(e)}")
+        
+        db_initialized = True
+        return {
+            "status": "success",
+            "message": "Base de données initialisée avec succès"
+        }
+    except Exception as e:
+        return {
+            "status": "error",
+            "message": f"Erreur lors de l'initialisation: {str(e)}"
+        }

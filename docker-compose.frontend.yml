@@ -1,0 +1,38 @@
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Copier les dépendances
+COPY frontend/frontend/package.json frontend/frontend/package-lock.json ./
+
+# Installer les dépendances
+RUN npm ci
+
+# Copier le code source
+COPY frontend/frontend/ .
+
+# Builder l'application Angular
+RUN npm run build
+
+# Stage 2: Serveur de production
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Installer serve ou utiliser notre serveur Node
+RUN npm install -g compression express
+
+# Copier les fichiers compilés
+COPY --from=builder /app/dist /app/dist
+
+# Copier notre serveur Node
+COPY frontend/frontend/server.js /app/server.js
+
+EXPOSE 3000
+
+# Healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD wget -q -O- http://localhost:${PORT:-3000}/health || exit 1
+
+# Démarrer
+CMD ["node", "server.js"]

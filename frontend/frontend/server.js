@@ -5,6 +5,12 @@ const compress = require('compression');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// API URL depuis l'environnement Railway (injectée automatiquement)
+const API_BASE_URL = process.env.API_BASE_URL || 'http://localhost:8000/api';
+
+console.log(`🚀 Frontend démarrage sur le port ${PORT}`);
+console.log(`📡 API URL: ${API_BASE_URL}`);
+
 // Compression
 app.use(compress());
 
@@ -23,14 +29,12 @@ if (process.env.NODE_ENV === 'production') {
   });
 }
 
-// SPA: Redirection vers index.html pour les routes non-API
-app.get('*', (req, res) => {
-  // Ne pas rediriger les appels API
-  if (req.path.startsWith('/api/')) {
-    res.status(404).json({ error: 'Not found' });
-  } else {
-    res.sendFile(path.join(distPath, 'index.html'));
-  }
+// Endpoint pour la configuration frontend (injecter l'API URL)
+app.get('/api/config', (req, res) => {
+  res.json({
+    apiUrl: API_BASE_URL,
+    environment: process.env.NODE_ENV || 'production'
+  });
 });
 
 // Healthcheck
@@ -38,6 +42,12 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'healthy' });
 });
 
-app.listen(PORT, () => {
-  console.log(`Frontend server running on port ${PORT}`);
+// SPA: Redirection vers index.html pour les routes non-API
+app.get('*', (req, res) => {
+  res.sendFile(path.join(distPath, 'index.html'));
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`✅ Frontend server running on port ${PORT}`);
+  console.log(`📍 URL: http://localhost:${PORT}`);
 });
