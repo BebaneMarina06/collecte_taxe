@@ -1,2 +1,0 @@
-name = "collecte-taxe"
-pages_build_output_dir = "./frontend/frontend/dist/collecte-taxe/browser"
