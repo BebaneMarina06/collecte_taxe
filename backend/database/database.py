@@ -8,7 +8,7 @@ from sqlalchemy.pool import StaticPool
 import os
 import sys
 from dotenv import load_dotenv
-from urllib.parse import quote_plus, urlparse, urlunparse
+from urllib.parse import quote_plus, urlparse, urlunparse, unquote
 
 # Définir l'encodage UTF-8 pour Windows
 if sys.platform == 'win32':
@@ -48,9 +48,9 @@ try:
         # Parser l'URL pour encoder correctement le mot de passe
         parsed = urlparse(DATABASE_URL)
         if parsed.username and parsed.password:
-            # Encoder le username et password
-            username_encoded = quote_plus(parsed.username.encode('utf-8').decode('utf-8'))
-            password_encoded = quote_plus(parsed.password.encode('utf-8').decode('utf-8'))
+            # Encoder le username et password (unquote d'abord pour éviter le double-encodage)
+            username_encoded = quote_plus(unquote(parsed.username))
+            password_encoded = quote_plus(unquote(parsed.password))
             
             # Reconstruire l'URL
             netloc = f"{username_encoded}:{password_encoded}@{parsed.hostname}"
@@ -75,8 +75,7 @@ engine = create_engine(
     pool_pre_ping=True,  # Vérifie les connexions avant utilisation
     echo=False,  # Mettre à True pour voir les requêtes SQL
     connect_args={
-        "client_encoding": "utf8",
-        "options": "-c client_encoding=utf8"
+        "client_encoding": "utf8"
     }
 )
 

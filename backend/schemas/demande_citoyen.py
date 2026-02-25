@@ -56,4 +56,4 @@ class DemandeCitoyenResponse(DemandeCitoyenBase):
     
     class Config:
         from_attributes = True  # Pour SQLAlchemy 2.0+ (anciennement orm_mode = True)
-        use_enum_values = True
+        use_enum_values = True 
