@@ -82,14 +82,13 @@ async def add_utf8_encoding(request: Request, call_next):
             )
     return response
 
-# Configuration CORS pour permettre les requêtes depuis toutes les applications
+# Configuration CORS - autorise tous les frontends (admin, collecteur, portail-citoyen, mobile)
+# JWT Bearer tokens ne nécessitent pas allow_credentials=True (réservé aux cookies)
 import os
-cors_origins = ["*"]  # Accepter toutes les origines (collecteur, admin, mobile, etc.)
-
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=cors_origins,
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
