@@ -602,16 +602,21 @@ def get_contribuable_taxations(contribuable_id: int, db: Session = Depends(get_d
             # Calculer le montant attendu (montant_custom ou montant de la taxe)
             montant_attendu = affectation.montant_custom or Decimal(taxe.montant)
 
-            # Calculer le montant payé (somme des collectes pour cette taxe)
+            # Calculer le montant payé (somme des collectes validées pour cette taxe)
+            from database.models import StatutCollecteEnum
             collectes_sum = db.query(func.sum(InfoCollecte.montant)).filter(
                 and_(
                     InfoCollecte.contribuable_id == contribuable_id,
-                    InfoCollecte.taxe_id == taxe.id
+                    InfoCollecte.taxe_id == taxe.id,
+                    InfoCollecte.statut == StatutCollecteEnum.COMPLETED,
+                    InfoCollecte.annule == False
                 )
             ).scalar()
 
             montant_paye = Decimal(collectes_sum) if collectes_sum else Decimal("0.00")
             montant_restant = montant_attendu - montant_paye
+            
+            print(f"[TAXATION] Contribuable {contribuable_id}, Taxe {taxe.id} ({taxe.nom}): attendu={montant_attendu}, payé={montant_paye}, restant={montant_restant}")
 
             # Vérifier si en retard (date_fin dépassée et non payée)
             est_en_retard = False

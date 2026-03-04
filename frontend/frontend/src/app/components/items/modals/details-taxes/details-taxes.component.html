@@ -110,12 +110,14 @@
             </div>
             <div class="flex flex-col items-end gap-1">
               <span class="px-2 py-1 rounded-full text-xs font-medium"
-                    [class.bg-green-100]="taxation.statut === 'paye'"
-                    [class.text-green-700]="taxation.statut === 'paye'"
-                    [class.bg-yellow-100]="taxation.statut === 'partiel'"
-                    [class.text-yellow-700]="taxation.statut === 'partiel'"
-                    [class.bg-red-100]="taxation.statut === 'impaye'"
-                    [class.text-red-700]="taxation.statut === 'impaye'">
+                    [class.bg-green-100]="isStatutPaye(taxation)"
+                    [class.text-green-700]="isStatutPaye(taxation)"
+                    [class.bg-yellow-100]="taxation.statut?.toLowerCase() === 'partiel'"
+                    [class.text-yellow-700]="taxation.statut?.toLowerCase() === 'partiel'"
+                    [class.bg-red-100]="taxation.statut?.toLowerCase() === 'impaye'"
+                    [class.text-red-700]="taxation.statut?.toLowerCase() === 'impaye'"
+                    [class.bg-gray-100]="!isStatutPaye(taxation) && taxation.statut?.toLowerCase() !== 'partiel' && taxation.statut?.toLowerCase() !== 'impaye'"
+                    [class.text-gray-700]="!isStatutPaye(taxation) && taxation.statut?.toLowerCase() !== 'partiel' && taxation.statut?.toLowerCase() !== 'impaye'">
                 {{ getStatutLabel(taxation.statut) }}
               </span>
               @if (taxation.est_en_retard) {

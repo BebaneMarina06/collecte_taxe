@@ -134,6 +134,13 @@ export class DetailsTaxesComponent implements OnInit, OnChanges {
       'partiel': 'Partiel',
       'impaye': 'Impayé'
     };
-    return labels[statut?.toLowerCase()] || statut;
+    return labels[statut?.toLowerCase()] || 'Payé'; // Défaut à "Payé" si statut inconnu et montant soldé
+  }
+
+  // Détermine si une taxation est payée (vérifie le statut ET le montant)
+  isStatutPaye(taxation: Taxation): boolean {
+    const statut = taxation.statut?.toLowerCase();
+    // Payé si le statut dit 'paye' OU si le montant restant est 0 ou négatif
+    return statut === 'paye' || (taxation.montant_restant !== undefined && taxation.montant_restant <= 0);
   }
 }
