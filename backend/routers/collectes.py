@@ -246,8 +246,11 @@ def create_collecte_bulk(collecte_data: CollecteBulkCreate, db: Session = Depend
 
     collectes_created = []
 
+    print(f"📦 [BULK] Création de {len(collecte_data.items)} collectes pour contribuable {collecte_data.contribuable_id}")
+    print(f"📅 [BULK] Date collecte reçue: {collecte_data.date_collecte} -> utilisée: {date_collecte}")
+
     try:
-        for item in collecte_data.items:
+        for idx, item in enumerate(collecte_data.items):
             # Récupérer la taxe pour calculer la commission
             taxe = db.query(Taxe).filter(Taxe.id == item.taxe_id).first()
             if not taxe:
@@ -259,6 +262,8 @@ def create_collecte_bulk(collecte_data: CollecteBulkCreate, db: Session = Depend
             # Générer une référence unique
             count = db.query(InfoCollecte).count() + len(collectes_created) + 1
             reference = f"COL-{datetime.utcnow().strftime('%Y%m%d')}-{count:04d}"
+
+            print(f"   [{idx+1}/{len(collecte_data.items)}] Taxe {item.taxe_id} ({taxe.nom}): {item.montant} XAF, ref={reference}")
 
             # Créer la collecte
             db_collecte = InfoCollecte(
@@ -280,23 +285,29 @@ def create_collecte_bulk(collecte_data: CollecteBulkCreate, db: Session = Depend
                 "taxe_nom": taxe.nom,
                 "montant": float(item.montant),
                 "commission": commission,
-                "reference": reference
+                "reference": reference,
+                "date_collecte": str(date_collecte)
             })
 
         db.commit()
+        print(f"✅ [BULK] {len(collectes_created)} collectes créées avec succès")
 
-        return {
+        response = {
             "success": True,
             "message": f"{len(collectes_created)} collecte(s) créée(s) avec succès",
             "contribuable_id": collecte_data.contribuable_id,
             "collecteur_id": collecte_data.collecteur_id,
             "collectes": collectes_created,
             "montant_total": sum(c["montant"] for c in collectes_created),
-            "commission_totale": sum(c["commission"] for c in collectes_created)
+            "commission_totale": sum(c["commission"] for c in collectes_created),
+            "date_collecte": str(date_collecte)
         }
+        print(f"📤 [BULK] Réponse: {response}")
+        return response
 
     except Exception as e:
         db.rollback()
+        print(f"❌ [BULK] Erreur: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Erreur lors de la création des collectes: {str(e)}")
 
 

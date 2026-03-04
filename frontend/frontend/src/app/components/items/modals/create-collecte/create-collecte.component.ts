@@ -75,11 +75,11 @@ export class CreateCollecteComponent implements OnInit {
   ngOnInit(): void {
     console.log('🚀 CreateCollecteComponent initialisé');
 
-    // Définir la date du jour par défaut
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    this.formData.date_collecte = today.toISOString().split('T')[0];
-    console.log('📅 Date par défaut:', this.formData.date_collecte);
+    // Définir la date et l'heure actuelles par défaut
+    const now = new Date();
+    // Format: YYYY-MM-DDTHH:MM pour le input datetime-local
+    this.formData.date_collecte = now.toISOString().slice(0, 16);
+    console.log('📅 Date/heure par défaut:', this.formData.date_collecte);
 
     // Charger les listes
     this.loadContribuables();
@@ -278,15 +278,14 @@ export class CreateCollecteComponent implements OnInit {
   }
 
   resetForm(): void {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const now = new Date();
     
     this.formData = {
       contribuable_id: 0,
       collecteur_id: 0,
       type_paiement: 'especes',
       billetage: undefined,
-      date_collecte: today.toISOString().split('T')[0],
+      date_collecte: now.toISOString().slice(0, 16),
       items: []
     };
     this.selectedContribuable = undefined;

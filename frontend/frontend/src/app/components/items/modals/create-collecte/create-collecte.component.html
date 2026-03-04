@@ -191,14 +191,14 @@
       </div>
     </div>
 
-    <!-- Date de Collecte -->
+    <!-- Date et Heure de Collecte -->
     <div>
       <label for="date_collecte" class="block text-sm/6 font-medium text-gray-900">
-        Date de la collecte
+        Date et heure de la collecte
       </label>
       <div class="mt-2">
         <input 
-          type="date" 
+          type="datetime-local" 
           name="date_collecte" 
           id="date_collecte" 
           [(ngModel)]="formData.date_collecte"
