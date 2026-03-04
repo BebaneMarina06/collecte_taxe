@@ -1,326 +1,317 @@
-<div class="impayes-container p-6">
-  <!-- En-tête avec titre et actions -->
-  <div class="header-section mb-6">
-    <div class="flex justify-between items-center mb-4">
-      <h1 class="text-3xl font-bold text-blue-900">Gestion des Impayés</h1>
+<app-contener>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">Gestion des Impayés</h1>
+    <p class="text-gray-600 mt-1">Suivi des taxes impayées et en retard</p>
+  </div>
+
+  <!-- Statistiques globales -->
+  @if (stats) {
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+      <div class="rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(15,23,42,0.06)] bg-white p-5">
+        <div class="flex items-center gap-3">
+          <div class="p-3 rounded-xl bg-blue-50">
+            <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Total Affectations</p>
+            <p class="text-2xl font-bold text-gray-900">{{ stats.globales.total_affectations }}</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(15,23,42,0.06)] bg-white p-5">
+        <div class="flex items-center gap-3">
+          <div class="p-3 rounded-xl bg-red-50">
+            <svg class="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant Impayé</p>
+            <p class="text-2xl font-bold text-red-600">{{ formatMontant(stats.globales.montant_impaye_total) }} <span class="text-sm font-medium">FCFA</span></p>
+            <p class="text-xs text-gray-500">{{ stats.globales.total_impaye + stats.globales.total_retard }} dossiers</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(15,23,42,0.06)] bg-white p-5">
+        <div class="flex items-center gap-3">
+          <div class="p-3 rounded-xl bg-green-50">
+            <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Montant Collecté</p>
+            <p class="text-2xl font-bold text-green-600">{{ formatMontant(stats.globales.montant_total_paye) }} <span class="text-sm font-medium">FCFA</span></p>
+            <p class="text-xs text-gray-500">{{ stats.globales.total_paye }} taxes payées</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="rounded-2xl border border-gray-100 shadow-[0_4px_20px_rgba(15,23,42,0.06)] bg-white p-5">
+        <div class="flex items-center gap-3">
+          <div class="p-3 rounded-xl bg-amber-50">
+            <svg class="w-6 h-6 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div>
+            <p class="text-xs font-medium text-gray-500 uppercase tracking-wide">Paiements Partiels</p>
+            <p class="text-2xl font-bold text-amber-600">{{ stats.globales.total_partiel }}</p>
+            <p class="text-xs text-gray-500">En cours de recouvrement</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Filtres -->
+  <div class="flex flex-wrap justify-between items-end gap-4 py-4 bg-background rounded-lg my-6 px-4">
+    <div class="flex flex-wrap gap-4 items-end">
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Statut</label>
+        <select 
+          [(ngModel)]="filters.statut" 
+          class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main min-w-[150px]">
+          <option [ngValue]="undefined">Tous les statuts</option>
+          <option *ngFor="let statut of statutOptions" [value]="statut">{{ getStatutLabel(statut) }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Zone</label>
+        <select 
+          [(ngModel)]="filters.zone_nom" 
+          class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main min-w-[150px]">
+          <option [ngValue]="undefined">Toutes les zones</option>
+          <option *ngFor="let zone of zones" [value]="zone">{{ zone }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Quartier</label>
+        <select 
+          [(ngModel)]="filters.quartier_nom" 
+          class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main min-w-[150px]">
+          <option [ngValue]="undefined">Tous les quartiers</option>
+          <option *ngFor="let quartier of quartiers" [value]="quartier">{{ quartier }}</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">ID Contribuable</label>
+        <input 
+          type="number" 
+          [(ngModel)]="filters.contribuable_id"
+          placeholder="ID..."
+          class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main w-[100px]">
+      </div>
+
+      <div>
+        <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">ID Taxe</label>
+        <input 
+          type="number" 
+          [(ngModel)]="filters.taxe_id"
+          placeholder="ID..."
+          class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main w-[100px]">
+      </div>
+    </div>
+
+    <div class="flex gap-3 items-center">
+      <button 
+        (click)="resetFilters()" 
+        class="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
+        Réinitialiser
+      </button>
+      <button 
+        (click)="applyFilters()" 
+        class="px-5 py-2 rounded-lg bg-main text-white text-sm font-semibold hover:bg-main/90 transition-colors">
+        Appliquer
+      </button>
       <button 
         (click)="exportToCSV()"
-        class="btn btn-secondary flex items-center gap-2">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
         </svg>
-        Exporter CSV
+        Exporter
       </button>
-    </div>
-
-    <!-- Statistiques globales -->
-    <div class="stats-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6" *ngIf="stats">
-      <div class="stat-card bg-white p-4 rounded-lg shadow border-l-4 border-blue-800">
-        <div class="text-sm text-gray-600 mb-1">Total Affectations</div>
-        <div class="text-2xl font-bold text-gray-800">{{ stats.globales.total_affectations }}</div>
-      </div>
-
-      <div class="stat-card bg-white p-4 rounded-lg shadow border-l-4 border-red-600">
-        <div class="text-sm text-gray-600 mb-1">Montant Impayé</div>
-        <div class="text-2xl font-bold text-red-600">{{ formatMontant(stats.globales.montant_impaye_total) }} FCFA</div>
-        <div class="text-xs text-gray-500 mt-1">
-          {{ stats.globales.total_impaye + stats.globales.total_retard }} dossiers
-        </div>
-      </div>
-
-      <div class="stat-card bg-white p-4 rounded-lg shadow border-l-4 border-green-600">
-        <div class="text-sm text-gray-600 mb-1">Montant Collecté</div>
-        <div class="text-2xl font-bold text-green-600">{{ formatMontant(stats.globales.montant_total_paye) }} FCFA</div>
-        <div class="text-xs text-gray-500 mt-1">
-          {{ stats.globales.total_paye }} taxes payées
-        </div>
-      </div>
-
-      <div class="stat-card bg-white p-4 rounded-lg shadow border-l-4 border-gray-400">
-        <div class="text-sm text-gray-600 mb-1">Paiements Partiels</div>
-        <div class="text-2xl font-bold text-gray-700">{{ stats.globales.total_partiel }}</div>
-        <div class="text-xs text-gray-500 mt-1">En cours de recouvrement</div>
-      </div>
-    </div>
-
-    <!-- Filtres -->
-    <div class="filters-section bg-white p-4 rounded-lg shadow mb-6">
-      <h3 class="text-lg font-semibold mb-3 text-blue-900">Filtres</h3>
-      
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <!-- Filtre Statut -->
-        <div class="form-group">
-          <label class="block text-sm font-medium text-blue-900 mb-1">Statut</label>
-          <select 
-            [(ngModel)]="filters.statut" 
-            class="form-select w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-            <option [ngValue]="undefined">Tous les statuts</option>
-            <option *ngFor="let statut of statutOptions" [value]="statut">
-              {{ getStatutLabel(statut) }}
-            </option>
-          </select>
-        </div>
-
-        <!-- Filtre Zone -->
-        <div class="form-group">
-          <label class="block text-sm font-medium text-blue-900 mb-1">Zone</label>
-          <select 
-            [(ngModel)]="filters.zone_nom" 
-            class="form-select w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-            <option [ngValue]="undefined">Toutes les zones</option>
-            <option *ngFor="let zone of zones" [value]="zone">{{ zone }}</option>
-          </select>
-        </div>
-
-        <!-- Filtre Quartier -->
-        <div class="form-group">
-          <label class="block text-sm font-medium text-blue-900 mb-1">Quartier</label>
-          <select 
-            [(ngModel)]="filters.quartier_nom" 
-            class="form-select w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-            <option [ngValue]="undefined">Tous les quartiers</option>
-            <option *ngFor="let quartier of quartiers" [value]="quartier">{{ quartier }}</option>
-          </select>
-        </div>
-
-        <!-- Filtre Contribuable ID -->
-        <div class="form-group">
-          <label class="block text-sm font-medium text-blue-900 mb-1">ID Contribuable</label>
-          <input 
-            type="number" 
-            [(ngModel)]="filters.contribuable_id"
-            placeholder="ID..."
-            class="form-input w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-        </div>
-
-        <!-- Filtre Taxe ID -->
-        <div class="form-group">
-          <label class="block text-sm font-medium text-blue-900 mb-1">ID Taxe</label>
-          <input 
-            type="number" 
-            [(ngModel)]="filters.taxe_id"
-            placeholder="ID..."
-            class="form-input w-full rounded border-gray-300 focus:border-blue-500 focus:ring-blue-500">
-        </div>
-      </div>
-
-      <!-- Boutons d'action -->
-      <div class="flex gap-3 mt-4">
-        <button 
-          (click)="applyFilters()" 
-          class="btn btn-primary px-6">
-          Appliquer les filtres
-        </button>
-        <button 
-          (click)="resetFilters()" 
-          class="btn btn-secondary px-6">
-          Réinitialiser
-        </button>
-      </div>
     </div>
   </div>
 
   <!-- Message d'erreur -->
-  <div *ngIf="error" class="alert alert-error mb-4">
-    <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
-    </svg>
-    <span>{{ error }}</span>
-  </div>
+  @if (error) {
+    <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3">
+      <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+      </svg>
+      <span class="text-sm text-red-700">{{ error }}</span>
+    </div>
+  }
 
-  <!-- Chargement -->
-  <div *ngIf="loading" class="flex justify-center items-center py-12">
-    <div class="spinner"></div>
-    <span class="ml-3 text-gray-600">Chargement des impayés...</span>
-  </div>
-
-  <!-- Tableau des impayés -->
-  <div *ngIf="!loading && impayes.length > 0" class="bg-white rounded-lg shadow overflow-hidden">
+  <!-- Tableau -->
+  <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
-        <thead class="bg-blue-900 text-white">
-          <tr>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-              Contribuable
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-              Localisation
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-              Taxe
-            </th>
-            <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider">
-              Montants (FCFA)
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
-              Statut
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
-              Échéance
-            </th>
-            <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider">
-              Collecteur
-            </th>
-            <th class="px-6 py-3 text-center text-xs font-medium uppercase tracking-wider">
-              Actions
-            </th>
+      <table class="min-w-full text-sm text-gray-600">
+        <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+          <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+            <th class="px-6 py-4 text-left">Contribuable</th>
+            <th class="px-6 py-4 text-left">Localisation</th>
+            <th class="px-6 py-4 text-left">Taxe</th>
+            <th class="px-6 py-4 text-right">Montants</th>
+            <th class="px-6 py-4 text-center">Statut</th>
+            <th class="px-6 py-4 text-center">Échéance</th>
+            <th class="px-6 py-4 text-left">Collecteur</th>
+            <th class="px-6 py-4 text-right">Actions</th>
           </tr>
         </thead>
-        <tbody class="bg-white divide-y divide-gray-200">
-          <tr *ngFor="let impaye of impayes" class="hover:bg-blue-50 transition-colors">
-            <!-- Contribuable -->
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="flex items-center">
-                <div>
-                  <div class="text-sm font-medium text-gray-900">
-                    {{ impaye.contribuable_nom }} {{ impaye.contribuable_prenom }}
-                  </div>
-                  <div class="text-sm text-gray-500">{{ impaye.contribuable_telephone }}</div>
+        <tbody class="bg-white divide-y divide-gray-100">
+          @if (loading) {
+            <tr>
+              <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                <div class="flex items-center justify-center gap-3">
+                  <svg class="animate-spin h-6 w-6 text-main" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Chargement des impayés...</span>
                 </div>
-              </div>
-            </td>
+              </td>
+            </tr>
+          } @else {
+            @for (impaye of impayes; track impaye.affectation_id) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <!-- Contribuable -->
+                <td class="px-6 py-4">
+                  <p class="font-semibold text-gray-900">{{ impaye.contribuable_nom }} {{ impaye.contribuable_prenom }}</p>
+                  <p class="text-xs text-gray-500">{{ impaye.contribuable_telephone }}</p>
+                </td>
 
-            <!-- Localisation -->
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900">{{ impaye.zone_nom || 'N/A' }}</div>
-              <div class="text-sm text-gray-500">{{ impaye.quartier_nom || 'N/A' }}</div>
-            </td>
+                <!-- Localisation -->
+                <td class="px-6 py-4">
+                  <p class="font-medium text-gray-900">{{ impaye.zone_nom || 'N/A' }}</p>
+                  <p class="text-xs text-gray-500">{{ impaye.quartier_nom || 'N/A' }}</p>
+                </td>
 
-            <!-- Taxe -->
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm font-medium text-gray-900">{{ impaye.taxe_nom }}</div>
-              <div class="text-sm text-gray-500">{{ impaye.taxe_code }}</div>
-            </td>
+                <!-- Taxe -->
+                <td class="px-6 py-4">
+                  <div class="flex flex-col gap-1">
+                    <span class="px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold w-fit">
+                      {{ impaye.taxe_nom }}
+                    </span>
+                    <span class="text-xs text-gray-500 font-mono">{{ impaye.taxe_code }}</span>
+                  </div>
+                </td>
 
-            <!-- Montants -->
-            <td class="px-6 py-4 whitespace-nowrap text-right">
-              <div class="text-sm text-gray-900">
-                Attendu: <span class="font-semibold">{{ formatMontant(impaye.montant_attendu) }}</span>
-              </div>
-              <div class="text-sm text-green-600">
-                Payé: {{ formatMontant(impaye.montant_paye) }}
-              </div>
-              <div class="text-sm font-semibold" 
-                   [ngClass]="impaye.montant_restant > 0 ? 'text-red-600' : 'text-gray-500'">
-                Restant: {{ formatMontant(impaye.montant_restant) }}
-              </div>
-              <div class="text-xs text-gray-500 mt-1">
-                {{ formatPourcentage(impaye.pourcentage_paye) }} payé
-              </div>
-            </td>
+                <!-- Montants -->
+                <td class="px-6 py-4 text-right">
+                  <div class="space-y-1">
+                    <p class="text-sm text-gray-600">
+                      Attendu: <span class="font-semibold text-gray-900">{{ formatMontant(impaye.montant_attendu) }}</span>
+                    </p>
+                    <p class="text-sm text-green-600">
+                      Payé: {{ formatMontant(impaye.montant_paye) }}
+                    </p>
+                    <p class="text-sm font-semibold" [ngClass]="impaye.montant_restant > 0 ? 'text-red-600' : 'text-gray-500'">
+                      Restant: {{ formatMontant(impaye.montant_restant) }}
+                    </p>
+                    <div class="w-full bg-gray-100 rounded-full h-1.5 mt-2">
+                      <div class="bg-green-500 h-1.5 rounded-full transition-all" [style.width.%]="formatPourcentage(impaye.pourcentage_paye)"></div>
+                    </div>
+                  </div>
+                </td>
 
-            <!-- Statut -->
-            <td class="px-6 py-4 whitespace-nowrap text-center">
-              <span 
-                class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full border"
-                [ngClass]="getStatutClass(impaye.statut)">
-                {{ getStatutLabel(impaye.statut) }}
-              </span>
-            </td>
+                <!-- Statut -->
+                <td class="px-6 py-4 text-center">
+                  <span 
+                    class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold"
+                    [ngClass]="getStatutClass(impaye.statut)">
+                    <span class="size-2 rounded-full bg-current opacity-60"></span>
+                    {{ getStatutLabel(impaye.statut) }}
+                  </span>
+                </td>
 
-            <!-- Échéance et retard -->
-            <td class="px-6 py-4 whitespace-nowrap text-center">
-              <div class="text-sm text-gray-900">{{ formatDate(impaye.date_echeance) }}</div>
-              <div 
-                *ngIf="impaye.jours_retard > 0"
-                class="text-xs font-medium mt-1"
-                [ngClass]="getRetardClass(impaye.jours_retard)">
-                +{{ impaye.jours_retard }} jours
-              </div>
-            </td>
+                <!-- Échéance -->
+                <td class="px-6 py-4 text-center">
+                  <p class="text-sm text-gray-900">{{ formatDate(impaye.date_echeance) }}</p>
+                  @if (impaye.jours_retard > 0) {
+                    <span 
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1"
+                      [ngClass]="getRetardClass(impaye.jours_retard)">
+                      +{{ impaye.jours_retard }} jours
+                    </span>
+                  }
+                </td>
 
-            <!-- Collecteur -->
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="text-sm text-gray-900" *ngIf="impaye.collecteur_nom">
-                {{ impaye.collecteur_nom }} {{ impaye.collecteur_prenom }}
-              </div>
-              <div class="text-sm text-gray-400 italic" *ngIf="!impaye.collecteur_nom">
-                Non assigné
-              </div>
-            </td>
+                <!-- Collecteur -->
+                <td class="px-6 py-4">
+                  @if (impaye.collecteur_nom) {
+                    <p class="font-medium text-gray-900">{{ impaye.collecteur_nom }} {{ impaye.collecteur_prenom }}</p>
+                  } @else {
+                    <span class="text-xs text-gray-400 italic">Non assigné</span>
+                  }
+                </td>
 
-            <!-- Actions -->
-            <td class="px-6 py-4 whitespace-nowrap text-center text-sm font-medium">
-              <button 
-                (click)="voirDetailsContribuable(impaye.contribuable_id)"
-                class="text-blue-700 hover:text-blue-900 mr-3"
-                title="Voir détails">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                </svg>
-              </button>
-            </td>
-          </tr>
+                <!-- Actions -->
+                <td class="px-6 py-4 text-right">
+                  <button 
+                    (click)="voirDetailsContribuable(impaye.contribuable_id)"
+                    class="px-3 py-1.5 rounded-lg bg-main text-white text-xs font-semibold hover:bg-main/90 transition-colors">
+                    Voir détails
+                  </button>
+                </td>
+              </tr>
+            } @empty {
+              <tr>
+                <td colspan="8" class="px-6 py-12 text-center">
+                  <div class="flex flex-col items-center gap-3">
+                    <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="text-sm font-medium text-gray-900">Aucun impayé trouvé</p>
+                    <p class="text-xs text-gray-500">Essayez de modifier vos filtres</p>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
         </tbody>
       </table>
     </div>
 
     <!-- Pagination -->
-    <div class="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-      <div class="flex-1 flex justify-between sm:hidden">
-        <button 
-          (click)="onPageChange(currentPage - 1)"
-          [disabled]="currentPage === 0"
-          class="btn btn-secondary">
-          Précédent
-        </button>
-        <button 
-          (click)="onPageChange(currentPage + 1)"
-          [disabled]="currentPage >= getTotalPages() - 1"
-          class="btn btn-secondary">
-          Suivant
-        </button>
-      </div>
-      
-      <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
-        <div>
-          <p class="text-sm text-gray-700">
-            Affichage de 
-            <span class="font-medium">{{ currentPage * pageSize + 1 }}</span>
-            à 
-            <span class="font-medium">{{ Math.min((currentPage + 1) * pageSize, total) }}</span>
-            sur 
-            <span class="font-medium">{{ total }}</span>
-            résultats
-          </p>
-        </div>
-        
-        <div>
-          <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
-            <button 
-              (click)="onPageChange(currentPage - 1)"
-              [disabled]="currentPage === 0"
-              class="btn-pagination rounded-l-md">
-              Précédent
-            </button>
-            
-            <button 
-              *ngFor="let page of [].constructor(getTotalPages()); let i = index"
-              (click)="onPageChange(i)"
-              [class.active]="i === currentPage"
-              class="btn-pagination">
-              {{ i + 1 }}
-            </button>
-            
-            <button 
-              (click)="onPageChange(currentPage + 1)"
-              [disabled]="currentPage >= getTotalPages() - 1"
-              class="btn-pagination rounded-r-md">
-              Suivant
-            </button>
-          </nav>
+    @if (!loading && impayes.length > 0) {
+      <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+        <p class="text-sm text-gray-600">
+          Affichage de 
+          <span class="font-semibold text-gray-900">{{ currentPage * pageSize + 1 }}</span>
+          à 
+          <span class="font-semibold text-gray-900">{{ Math.min((currentPage + 1) * pageSize, total) }}</span>
+          sur 
+          <span class="font-semibold text-gray-900">{{ total }}</span>
+          résultats
+        </p>
+        <div class="flex items-center gap-2">
+          <button 
+            (click)="onPageChange(currentPage - 1)"
+            [disabled]="currentPage === 0"
+            class="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors">
+            Précédent
+          </button>
+          <span class="px-4 py-2 text-sm font-semibold text-main">
+            {{ currentPage + 1 }} / {{ getTotalPages() }}
+          </span>
+          <button 
+            (click)="onPageChange(currentPage + 1)"
+            [disabled]="currentPage >= getTotalPages() - 1"
+            class="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors">
+            Suivant
+          </button>
         </div>
       </div>
-    </div>
+    }
   </div>
-
-  <!-- Message si aucun résultat -->
-  <div *ngIf="!loading && impayes.length === 0" class="text-center py-12 bg-white rounded-lg shadow">
-    <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-    </svg>
-    <h3 class="mt-2 text-sm font-medium text-gray-900">Aucun impayé trouvé</h3>
-    <p class="mt-1 text-sm text-gray-500">Essayez de modifier vos filtres</p>
-  </div>
-</div>
+</app-contener>

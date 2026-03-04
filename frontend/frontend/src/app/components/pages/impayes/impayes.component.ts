@@ -2,11 +2,12 @@ import { Component, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ImpayesAdaptiveService, ImpayeUnifie, ListeResponse } from '../../../services/impayes.service';
+import { ContenerComponent } from '../../items/contener/contener.component';
 
 @Component({
   selector: 'app-impayes',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ContenerComponent],
   templateUrl: './impayes.component.html',
   styleUrl: './impayes.component.scss'
 })
@@ -114,12 +115,12 @@ export class ImpayesComponent implements OnInit {
 
   getStatutClass(statut: string): string {
     const classes: { [key: string]: string } = {
-      'PAYE': 'bg-white text-green-700 border-green-400',
-      'PARTIEL': 'bg-white text-blue-700 border-blue-400',
-      'IMPAYE': 'bg-white text-gray-700 border-gray-400',
-      'RETARD': 'bg-white text-red-700 border-red-400'
+      'PAYE': 'bg-green-100 text-green-700',
+      'PARTIEL': 'bg-amber-100 text-amber-700',
+      'IMPAYE': 'bg-slate-100 text-slate-700',
+      'RETARD': 'bg-red-100 text-red-700'
     };
-    return classes[statut] || 'bg-white text-gray-700 border-gray-300';
+    return classes[statut] || 'bg-slate-100 text-slate-700';
   }
 
   getStatutLabel(statut: string): string {
@@ -134,10 +135,10 @@ export class ImpayesComponent implements OnInit {
 
   getRetardClass(joursRetard: number): string {
     if (joursRetard === 0) return '';
-    if (joursRetard > 90) return 'text-red-700 font-bold';
-    if (joursRetard > 60) return 'text-red-600 font-semibold';
-    if (joursRetard > 30) return 'text-orange-600';
-    return 'text-yellow-600';
+    if (joursRetard > 90) return 'bg-red-100 text-red-700';
+    if (joursRetard > 60) return 'bg-red-50 text-red-600';
+    if (joursRetard > 30) return 'bg-orange-50 text-orange-600';
+    return 'bg-yellow-50 text-yellow-600';
   }
 
   exportToCSV(): void {

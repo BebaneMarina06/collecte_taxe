@@ -1,165 +1,258 @@
-<div class="etat-collecteurs-container">
-  <app-contener>
-    <div class="mb-6">
-      <h1 class="text-2xl font-bold text-gray-900">État des Collecteurs</h1>
-      <p class="text-gray-600 mt-1">Suivi des montants collectés - Tous les collecteurs</p>
-    </div>
+<app-contener>
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-gray-900">État des Collecteurs</h1>
+    <p class="text-gray-600 mt-1">Suivi des montants collectés par collecteur</p>
+  </div>
 
-    <div *ngIf="error" class="px-4 mb-4">
-      <div class="text-sm text-red-600 bg-red-50 p-3 rounded-lg">{{ error }}</div>
+  <!-- Message d'erreur -->
+  @if (error) {
+    <div class="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 flex items-center gap-3">
+      <svg class="w-5 h-5 text-red-500 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd" />
+      </svg>
+      <span class="text-sm text-red-700">{{ error }}</span>
     </div>
+  }
 
-    <!-- Filtres simplifiés -->
-    <div class="flex justify-between items-center py-4 bg-gray-50 rounded-lg my-6 px-4">
+  <!-- Filtres -->
+  <div class="flex flex-wrap justify-between items-end gap-4 py-4 bg-background rounded-lg my-6 px-4">
+    <div class="flex flex-wrap gap-4 items-end">
+      <!-- Mode de filtre -->
       <div class="flex gap-4 items-center">
-        <div class="flex gap-2 items-center">
-          <label class="text-sm font-medium text-gray-700">
-            <input type="radio" [(ngModel)]="modeFiltre" value="jour" (change)="changerModeFiltre()" class="mr-2" />
-            Jour spécifique
-          </label>
-          <label class="text-sm font-medium text-gray-700">
-            <input type="radio" [(ngModel)]="modeFiltre" value="plage" (change)="changerModeFiltre()" class="mr-2" />
-            Plage de dates
-          </label>
-        </div>
-
-        <div *ngIf="modeFiltre === 'jour'" class="flex gap-2">
-          <input type="date" [(ngModel)]="dateSpecifique" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-        </div>
-
-        <div *ngIf="modeFiltre === 'plage'" class="flex gap-2">
-          <input type="date" [(ngModel)]="dateDebut" placeholder="Date début" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-          <input type="date" [(ngModel)]="dateFin" placeholder="Date fin" class="rounded-md bg-white py-2 px-3 text-sm text-gray-900 border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500" />
-        </div>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+          <input 
+            type="radio" 
+            [(ngModel)]="modeFiltre" 
+            value="jour" 
+            (change)="changerModeFiltre()" 
+            class="w-4 h-4 text-main focus:ring-main border-gray-300" />
+          <span>Jour spécifique</span>
+        </label>
+        <label class="flex items-center gap-2 text-sm font-medium text-gray-700 cursor-pointer">
+          <input 
+            type="radio" 
+            [(ngModel)]="modeFiltre" 
+            value="plage" 
+            (change)="changerModeFiltre()" 
+            class="w-4 h-4 text-main focus:ring-main border-gray-300" />
+          <span>Plage de dates</span>
+        </label>
       </div>
 
-      <div class="flex gap-3 items-center">
-        <button (click)="reinitialiserFiltres()" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
-          Réinitialiser
-        </button>
-        <button (click)="chargerEtats()" class="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-colors">
-          Charger
-        </button>
-        <button (click)="exporterCSV()" class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
-          Exporter CSV
-        </button>
-      </div>
+      <!-- Date(s) -->
+      @if (modeFiltre === 'jour') {
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Date</label>
+          <input 
+            type="date" 
+            [(ngModel)]="dateSpecifique" 
+            class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main" />
+        </div>
+      } @else {
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Date début</label>
+          <input 
+            type="date" 
+            [(ngModel)]="dateDebut" 
+            class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main" />
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-500 uppercase tracking-wide mb-1.5">Date fin</label>
+          <input 
+            type="date" 
+            [(ngModel)]="dateFin" 
+            class="rounded-lg bg-white py-2 px-3 text-sm text-gray-900 border border-gray-200 focus:ring-2 focus:ring-main focus:border-main" />
+        </div>
+      }
     </div>
 
-    <!-- Tableau -->
-    <div class="rounded-lg border border-gray-200 shadow-sm bg-white overflow-hidden">
-      <div class="overflow-x-auto">
-        <table class="min-w-full text-sm text-gray-600">
-          <thead class="bg-gradient-to-r from-blue-600 to-blue-700 text-white">
-            <tr class="text-xs font-semibold uppercase tracking-wider">
-              <th class="px-6 py-4 text-left">Collecteur</th>
-              <th class="px-6 py-4 text-left">Date</th>
-              <th class="px-6 py-4 text-right">Cash (FCFA)</th>
-              <th class="px-6 py-4 text-right">Numérique (FCFA)</th>
-              <th class="px-6 py-4 text-right">Total (FCFA)</th>
-              <th class="px-6 py-4 text-center">Contribuables</th>
-              <th class="px-6 py-4 text-center">Détails</th>
-            </tr>
-          </thead>
-          <tbody class="bg-white divide-y divide-gray-100">
-            <tr *ngIf="loading">
+    <div class="flex gap-3 items-center">
+      <button 
+        (click)="reinitialiserFiltres()" 
+        class="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
+        Réinitialiser
+      </button>
+      <button 
+        (click)="chargerEtats()" 
+        class="px-5 py-2 rounded-lg bg-main text-white text-sm font-semibold hover:bg-main/90 transition-colors">
+        Charger
+      </button>
+      <button 
+        (click)="exporterCSV()" 
+        class="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-sm font-medium transition-colors">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+        </svg>
+        Exporter
+      </button>
+    </div>
+  </div>
+
+  <!-- Tableau -->
+  <div class="rounded-3xl border border-gray-100 shadow-[0_20px_60px_rgba(15,23,42,0.08)] bg-white overflow-hidden">
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-gray-600">
+        <thead class="bg-white sticky top-0 z-10 shadow-[0_1px_0_rgba(15,23,42,0.08)]">
+          <tr class="text-xs font-semibold uppercase tracking-[0.2em] text-gray-500">
+            <th class="px-6 py-4 text-left">Collecteur</th>
+            <th class="px-6 py-4 text-left">Date</th>
+            <th class="px-6 py-4 text-right">Cash (FCFA)</th>
+            <th class="px-6 py-4 text-right">Numérique (FCFA)</th>
+            <th class="px-6 py-4 text-right">Total (FCFA)</th>
+            <th class="px-6 py-4 text-center">Contribuables</th>
+            <th class="px-6 py-4 text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="bg-white divide-y divide-gray-100">
+          @if (loading) {
+            <tr>
               <td colspan="7" class="px-6 py-12 text-center text-gray-500">
                 <div class="flex items-center justify-center gap-3">
-                  <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                  <svg class="animate-spin h-6 w-6 text-main" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
                   <span>Chargement...</span>
                 </div>
               </td>
             </tr>
-            <tr *ngIf="!loading && paginerDonnees().length === 0">
-              <td colspan="7" class="px-6 py-12 text-center text-gray-500">
-                Aucune donnée à afficher pour cette période
-              </td>
-            </tr>
-            <ng-container *ngFor="let etat of paginerDonnees(); let i = index; trackBy: trackByIndex">
-              <tr class="hover:bg-blue-50 transition-colors">
+          } @else {
+            @for (etat of paginerDonnees(); track trackByIndex($index, etat)) {
+              <tr class="hover:bg-slate-50 transition-colors">
+                <!-- Collecteur -->
                 <td class="px-6 py-4">
-                  <p class="font-semibold text-gray-900">{{ etat.nom_collecteur }}</p>
+                  <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-main/10 flex items-center justify-center">
+                      <span class="text-sm font-bold text-main">{{ etat.nom_collecteur.charAt(0) }}</span>
+                    </div>
+                    <p class="font-semibold text-gray-900">{{ etat.nom_collecteur }}</p>
+                  </div>
                 </td>
+
+                <!-- Date -->
                 <td class="px-6 py-4">
-                  <p class="text-sm text-gray-700">{{ formatDate(etat.date) }}</p>
+                  <p class="font-medium text-gray-900">{{ formatDate(etat.date) }}</p>
                 </td>
-                <td class="px-6 py-4 text-right font-semibold text-orange-600">
-                  {{ formatMontant(etat.montant_cash) }}
-                </td>
-                <td class="px-6 py-4 text-right font-semibold text-sky-600">
-                  {{ formatMontant(etat.montant_numerique) }}
-                </td>
-                <td class="px-6 py-4 text-right font-bold text-blue-700 text-base">
-                  {{ formatMontant(etat.montant_total) }}
-                </td>
-                <td class="px-6 py-4 text-center">
-                  <span class="px-3 py-1 rounded-full bg-gray-100 text-gray-700 text-xs font-semibold">
-                    {{ etat.nombre_contribuables }}
+
+                <!-- Cash -->
+                <td class="px-6 py-4 text-right">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50 text-amber-700 text-sm font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                    {{ formatMontant(etat.montant_cash) }}
                   </span>
                 </td>
+
+                <!-- Numérique -->
+                <td class="px-6 py-4 text-right">
+                  <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-sky-50 text-sky-700 text-sm font-semibold">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                    </svg>
+                    {{ formatMontant(etat.montant_numerique) }}
+                  </span>
+                </td>
+
+                <!-- Total -->
+                <td class="px-6 py-4 text-right">
+                  <span class="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-green-50 text-green-700 text-base font-bold">
+                    {{ formatMontant(etat.montant_total) }}
+                  </span>
+                </td>
+
+                <!-- Contribuables -->
                 <td class="px-6 py-4 text-center">
+                  <span class="px-3 py-1.5 rounded-full bg-slate-100 text-slate-700 text-sm font-semibold">
+                    {{ etat.nombre_contribuables }} client(s)
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-6 py-4 text-right">
                   <button
                     (click)="afficherContribuables(etat)"
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium transition-colors"
-                    [class.bg-blue-100]="etat.showDetails"
-                    [class.text-blue-700]="etat.showDetails"
-                    [class.bg-gray-100]="!etat.showDetails"
-                    [class.text-gray-700]="!etat.showDetails"
-                    [class.hover:bg-blue-200]="etat.showDetails"
-                    [class.hover:bg-gray-200]="!etat.showDetails">
+                    class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors"
+                    [ngClass]="etat.showDetails ? 'bg-main text-white' : 'border border-gray-200 bg-white text-gray-700 hover:bg-gray-50'">
                     {{ etat.showDetails ? 'Masquer' : 'Voir détails' }}
                   </button>
                 </td>
               </tr>
 
-              <tr *ngIf="etat.showDetails" class="bg-gray-50">
-                <td colspan="7" class="px-6 py-4">
-                  <div class="space-y-3">
-                    <h4 class="text-sm font-semibold text-gray-700">
-                      Contribuables collectés le {{ formatDate(etat.date) }}
-                    </h4>
-                    <ul class="grid grid-cols-1 gap-2 md:grid-cols-2 lg:grid-cols-3">
-                      <li *ngFor="let contrib of etat.contribuables"
-                          class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-lg hover:border-blue-400 transition-colors">
-                        <div class="text-sm font-medium text-gray-900">
-                          {{ contrib.prenom }} {{ contrib.nom }}
-                        </div>
-                        <div class="text-sm text-blue-600 font-semibold">
-                          {{ formatMontant(contrib.montant) }} F
-                        </div>
-                      </li>
-                    </ul>
+              <!-- Détails des contribuables -->
+              @if (etat.showDetails) {
+                <tr class="bg-slate-50">
+                  <td colspan="7" class="px-6 py-5">
+                    <div class="space-y-4">
+                      <h4 class="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                        <svg class="w-4 h-4 text-main" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                        </svg>
+                        Contribuables collectés le {{ formatDate(etat.date) }}
+                      </h4>
+                      <div class="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-3">
+                        @for (contrib of etat.contribuables; track contrib.id) {
+                          <div class="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div class="flex items-center gap-3">
+                              <div class="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center">
+                                <span class="text-xs font-bold text-blue-600">{{ contrib.prenom?.charAt(0) || contrib.nom?.charAt(0) || '?' }}</span>
+                              </div>
+                              <span class="text-sm font-medium text-gray-900">{{ contrib.prenom }} {{ contrib.nom }}</span>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-green-50 text-green-700 text-sm font-semibold">
+                              {{ formatMontant(contrib.montant) }} F
+                            </span>
+                          </div>
+                        } @empty {
+                          <p class="text-sm text-gray-500 col-span-full">Aucun détail disponible</p>
+                        }
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+              }
+            } @empty {
+              <tr>
+                <td colspan="7" class="px-6 py-12 text-center">
+                  <div class="flex flex-col items-center gap-3">
+                    <svg class="w-12 h-12 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <p class="text-sm font-medium text-gray-900">Aucune donnée à afficher</p>
+                    <p class="text-xs text-gray-500">Sélectionnez une période et cliquez sur "Charger"</p>
                   </div>
                 </td>
               </tr>
-            </ng-container>
-          </tbody>
-        </table>
-      </div>
+            }
+          }
+        </tbody>
+      </table>
     </div>
 
     <!-- Pagination -->
-    <div class="flex justify-between items-center mt-6 px-4">
-      <div class="text-sm text-gray-600">
-        Total: <span class="font-semibold text-gray-900">{{ filteredEtats.length }}</span> entrée(s)
+    @if (!loading && filteredEtats.length > 0) {
+      <div class="flex items-center justify-between px-6 py-4 border-t border-gray-100">
+        <p class="text-sm text-gray-600">
+          Total: <span class="font-semibold text-gray-900">{{ filteredEtats.length }}</span> entrée(s)
+        </p>
+        <div class="flex items-center gap-2">
+          <button
+            (click)="allerPage(currentPage - 1)"
+            [disabled]="currentPage === 1"
+            class="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors">
+            Précédent
+          </button>
+          <span class="px-4 py-2 text-sm font-semibold text-main">
+            {{ currentPage }} / {{ totalPages }}
+          </span>
+          <button
+            (click)="allerPage(currentPage + 1)"
+            [disabled]="currentPage === totalPages"
+            class="px-4 py-2 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors">
+            Suivant
+          </button>
+        </div>
       </div>
-      <div class="flex items-center gap-3">
-        <button
-          (click)="allerPage(currentPage - 1)"
-          [disabled]="currentPage === 1"
-          class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors">
-          Précédent
-        </button>
-        <span class="text-sm font-medium text-gray-700">
-          Page <span class="font-bold text-blue-600">{{ currentPage }}</span> / {{ totalPages }}
-        </span>
-        <button
-          (click)="allerPage(currentPage + 1)"
-          [disabled]="currentPage === totalPages"
-          class="px-4 py-2 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors">
-          Suivant
-        </button>
-      </div>
-    </div>
-  </app-contener>
-</div>
+    }
+  </div>
+</app-contener>
